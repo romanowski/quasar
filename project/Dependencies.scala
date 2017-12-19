@@ -183,7 +183,7 @@ object Dependencies {
     "org.http4s"     %% "http4s-server"       % http4sVersion,
     "org.http4s"     %% "http4s-blaze-server" % http4sVersion,
     "org.http4s"     %% "http4s-blaze-client" % http4sVersion,
-    "org.scodec"     %% "scodec-scalaz"       % "1.3.0a",
+    "org.scodec"     %% "scodec-scalaz"       % "1.4.1a",
     "org.scodec"     %% "scodec-bits"         % scodecBitsVersion,
     "com.propensive" %% "rapture-json"        % raptureVersion     % Test,
     "com.propensive" %% "rapture-json-json4s" % raptureVersion     % Test,
