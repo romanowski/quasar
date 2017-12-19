@@ -27,6 +27,9 @@ def exclusiveTasks(tasks: Scoped*) =
 
 lazy val buildSettings = commonBuildSettings ++ Seq(
   organization := "org.quasar-analytics",
+  scalaOrganization := "org.scala-lang",
+  scalacOptions --= Seq("-Yliteral-types", "-Xstrict-patmat-analysis", "-Yinduction-heuristics", "-Ykind-polymorphism", "-Ybackend:GenBCode"),
+  scalacOptions -= "-Xfatal-warnings", // Just for now
   initialize := {
     val version = sys.props("java.specification.version")
     assert(
@@ -37,8 +40,9 @@ lazy val buildSettings = commonBuildSettings ++ Seq(
   ScoverageKeys.coverageHighlighting := true,
 
   scalacOptions ++= Seq(
-    "-target:jvm-1.8",
-    "-Ybackend:GenBCode"),
+    "-target:jvm-1.8"//,
+    //"-Ybackend:GenBCode"
+  ),
 
   // NB: -Xlint triggers issues that need to be fixed
   scalacOptions --= Seq(
@@ -247,7 +251,7 @@ lazy val root = project.in(file("."))
     sql, connector,   yggdrasil,
 //   |   /  | | \ \______|____________________________________________
 //   |  /   | |  \      /     \         \         \         \         \
-    core, skeleton, mimir, marklogic, mongodb, couchbase, sparkcore, rdbms,
+    core, skeleton, mimir, marklogic, mongodb, couchbase, /*sparkcore,*/ rdbms,
 //      \     |     /         |          |         |         |         |
           interface,   //     |          |         |         |         |
 //          /  \              |          |         |         |         |
@@ -260,7 +264,7 @@ lazy val root = project.in(file("."))
 //  |         / | \  /          /             _______________/         /
 //  |        /  |  \/__________/______       /            ____________/
 //  |       /   |  /    \     /        \    /            /
-  marklogicIt, mongoIt, couchbaseIt, sparkcoreIt, rdbmsIt
+  marklogicIt, mongoIt, couchbaseIt, /*sparkcoreIt,*/ rdbmsIt
 //
 // NB: the *It projects are temporary until we polyrepo
   ).enablePlugins(AutomateHeaderPlugin)
@@ -675,7 +679,7 @@ lazy val niflheim = project.setup
   .withWarnings
   .settings(
     libraryDependencies ++= Seq(
-      "com.typesafe.akka"  %% "akka-actor" % "2.3.11",
+      "com.typesafe.akka"  %% "akka-actor" % "2.4.12",
       "org.typelevel"      %% "spire"      % "0.14.1", // TODO use spireVersion from project/Dependencies.scala
       "org.objectweb.howl" %  "howl"       % "1.0.1-1"))
   .settings(headerLicenseSettings)
@@ -698,7 +702,7 @@ lazy val yggdrasil = project.setup
       "co.fs2" %% "fs2-io"     % "0.9.6",
       "co.fs2" %% "fs2-scalaz" % "0.2.0",
 
-      "com.codecommit" %% "smock" % "0.3-specs2-3.8.4" % "test"))
+      "com.codecommit" %% "smock" % "0.3-specs2-3.9.1" % "test"))
   .settings(headerLicenseSettings)
   .settings(publishSettings)
   .settings(assemblySettings)

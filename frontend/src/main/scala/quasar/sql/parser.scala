@@ -467,6 +467,7 @@ private[sql] class SQLParser[T[_[_]]: BirecursiveT]
     keyword("order") ~> keyword("by") ~> rep1sep(defined_expr ~ opt(keyword("asc") | keyword("desc")) ^^ {
       case i ~ (Some("asc") | None) => (ASC, i)
       case i ~ Some("desc") => (DESC, i)
+      case _ => ??? // TODO
     }, op(",")) ^? { case o :: os => OrderBy(NonEmptyList(o, os: _*)) }
 
   def expr: Parser[T[Sql]] = let_expr

@@ -20,7 +20,7 @@ import slamdata.Predef._
 
 trait HomomorphicFunction[-A, +B] { self =>
   def arity: Int
-  def apply(args: List[A]): Option[B]
+  def apply(args: List[A]): scala.Option[B]
   def andThen[C](f: B => C) = new HomomorphicFunction[A, C] {
     def arity = self.arity
     def apply(args: List[A]) = self.apply(args).map(f)

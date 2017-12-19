@@ -69,8 +69,8 @@ object Build {
     def setup: Project = (
       serialTests scalacPlugins (kindProjector) scalacArgs (defaultArgSet: _*) also(
         organization := "org.quasar-analytics",
-        scalaVersion := "2.11.8",
-        scalaOrganization := "org.typelevel",
+        scalaVersion := "2.12.4",
+       // scalaOrganization := "org.typelevel",
         logBuffered in Test := false,
         // fork in Test := true,
         unmanagedJars in Compile += (baseDirectory in ThisBuild).value / "lib" / "jdbm-3.0-SNAPSHOT.jar"))
