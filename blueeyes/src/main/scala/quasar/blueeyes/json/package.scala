@@ -647,6 +647,8 @@ package object json {
     def filter(p: JValue => Boolean): List[JValue] =
       foldDown(List.empty[JValue])((acc, e) => if (p(e)) e :: acc else acc).reverse
 
+    def withFilter(p: JValue => Boolean): List[JValue] = filter(p)
+
     def flatten: List[JValue] =
       foldDown(List.empty[JValue])((acc, e) => e :: acc).reverse
 
