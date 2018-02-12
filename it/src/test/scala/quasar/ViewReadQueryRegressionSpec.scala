@@ -75,7 +75,7 @@ class ViewReadQueryRegressionSpec
           val u: ReadFile ~> Free[BackendEffectIO, ?] =
             mapSNT(interp) compose view.readFile[ViewFS]
 
-          EitherT(EitherT.right(WriterT.put(fa.run.flatMapSuspension(u))(Vector.empty)))
+          EitherT(EitherT.rightT(WriterT.put(fa.run.flatMapSuspension(u))(Vector.empty)))
         }
       }
 

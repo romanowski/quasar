@@ -67,27 +67,3 @@ trait ClockSystem {
   }
 }
 object ClockSystem extends ClockSystem
-
-trait ClockMock {
-  protected class MockClock extends Clock {
-    private var _now: LocalDateTime = dateTime.zero
-    private var _nanoTime: Long = 0
-
-    def now() = _now
-
-    def instant() = _now.toUtcInstant
-
-    def nanoTime() = _nanoTime
-
-    def setNow(dateTime: LocalDateTime): LocalDateTime = { _now = dateTime; _now }
-
-    def setNow(millis: Long): LocalDateTime = dateTime fromMillis millis
-
-    def setNanoTime(time: Long): Long = { _nanoTime = time; _nanoTime }
-  }
-
-  def newMockClock = new MockClock
-
-  implicit val clockMock: MockClock = new MockClock
-}
-object ClockMock extends ClockMock

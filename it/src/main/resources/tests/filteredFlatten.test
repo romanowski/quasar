@@ -1,0 +1,17 @@
+{
+    "name": "filter flattened field",
+
+    "backends": {
+      "marklogic_json": "pending",
+      "marklogic_xml": "pending"
+    },
+
+    "data": "demo/patients.data",
+
+    "query": "select codes[*] as codes, state from `demo/patients` where city = \"BOULDER\" and state = \"UT\"",
+
+    "predicate": "exactly",
+
+    "expected": [{ "codes": { "code": "F43.25", "desc": "Displaced fracture of neck of fifth metacarpal bone, right hand, sequela" }, "state": "UT" },
+                 { "codes": { "code": "S48.912A", "desc": "Burn of unspecified degree of unspecified lower leg, initial encounter" }, "state": "UT" }]
+}

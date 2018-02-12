@@ -222,6 +222,11 @@ class HierarchicalFileSystemSpec extends quasar.Qspec with FileSystemFixture {
           runMntd(query.ls(rootDir </> dir("bar")).run)
             .eval(emptyMS) must_=== mnts.right
         }
+
+        "of empty mount should return empty set" >> {
+          runMntd(query.ls(rootDir </> dir("bar") </> dir("mntA")).run)
+            .eval(emptyMS) must_=== Set().right
+        }
       }
     }
 

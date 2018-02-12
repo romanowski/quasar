@@ -1,10 +1,7 @@
 {
     "name": "largest zips",
     "backends": {
-        "mimir":"ignoreFieldOrder",
-        "mongodb_2_6":       "ignoreResultOrder",
-        "mongodb_3_0":       "ignoreResultOrder",
-        "mongodb_read_only": "ignoreResultOrder"
+        "mimir":"ignoreFieldOrder"
     },
     "NB": "this should be pendingIgnoreFieldOrder, but it doesn't quite work for some reason",
     "data": "zips.data",

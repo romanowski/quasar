@@ -5,8 +5,6 @@
         "marklogic_json":    "skip",
         "marklogic_xml":     "skip",
         "mimir":             "skip",
-        "mongodb_2_6":       "skip",
-        "mongodb_3_0":       "skip",
         "mongodb_3_2":       "skip",
         "mongodb_3_4":       "skip",
         "mongodb_read_only": "skip",

@@ -23,6 +23,7 @@ import quasar.db._
 import scala.util.Random.nextInt
 
 import doobie.imports._
+import doobie.util.transactor.Transactor
 import scalaz._, Scalaz._
 import scalaz.concurrent.Task
 import org.specs2.mutable.SpecificationLike
@@ -55,12 +56,15 @@ object MetaStoreFixture {
       Task.delay { DbUtil.inMemoryConfig(s"test_mem_$nextInt") }
   def createNewTestTransactor(schema: List[Schema[Int]] = List(quasar.metastore.Schema.schema)): Task[Transactor[Task]] =
     createNewTestMetastore(schema).map(_.trans.transactor)
-  def createNewTestMetastore(schema: List[Schema[Int]] = List(quasar.metastore.Schema.schema)): Task[MetaStore] =
+  def createNewTestMetastore(
+    schema: List[Schema[Int]] = List(quasar.metastore.Schema.schema),
+    copyFromTo: List[Transactor[Task] => Transactor[Task] => Task[Unit]] = List(MetaStore.copy)
+  ): Task[MetaStore] =
     for {
       testConfig <- createNewTestMetaStoreConfig
       trans      =  simpleTransactor(DbConnectionConfig.connectionInfo(testConfig))
       _          <- schema.traverse(_.updateToLatest).transact(trans)
-    } yield MetaStore(testConfig, StatefulTransactor(trans, Task.now(())), schema)
+    } yield MetaStore(testConfig, StatefulTransactor(trans, Task.now(())), schema, copyFromTo)
 }
 
 trait H2MetaStoreFixture extends MetaStoreFixture {

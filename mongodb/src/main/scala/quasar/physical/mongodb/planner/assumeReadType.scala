@@ -22,9 +22,11 @@ import quasar.contrib.matryoshka._
 import quasar.contrib.pathy.AFile
 import quasar.ejson.implicits._
 import quasar.fp._
+import quasar.fp.ski._
 import quasar.fs.{FileSystemError, MonadFsErr}, FileSystemError.qscriptPlanningFailed
 import quasar.physical.mongodb.planner.common._
 import quasar.qscript._
+import quasar.qscript.analysis.ShapePreserving
 
 import matryoshka.{Hole => _, _}
 import matryoshka.data._
@@ -46,22 +48,24 @@ object assumeReadType {
     }
   }
 
+  def isRewriteIdStatus(idStatus: IdStatus): Boolean = idStatus === ExcludeId
+
   def isRewrite[T[_[_]]: BirecursiveT: EqualT, F[_]: Functor, G[_]: Functor, A](GtoF: PrismNT[G, F], qs: G[A])(implicit
     QC: QScriptCore[T, ?] :<: F,
     SR: Const[ShiftedRead[AFile], ?] :<: F,
-    ev: Recursive.Aux[A, G])
-      : Boolean = qs match {
-    case GtoF(QC(Filter(Embed(GtoF(SR(Const(ShiftedRead(_, ExcludeId))))), _)))
-       | GtoF(QC(Sort(Embed(GtoF(SR(Const(ShiftedRead(_, ExcludeId))))), _, _)))
-       | GtoF(QC(Sort(Embed(GtoF(QC(Filter(Embed(GtoF(SR(Const(ShiftedRead(_, ExcludeId))))), _)))), _ , _)))
-       | GtoF(QC(Subset(_, FreeQS(SRT(ShiftedRead(_, ExcludeId))), _ , _)))
-       | GtoF(SR(Const(ShiftedRead(_, ExcludeId)))) => true
-    case _ => false
+    FT: Injectable.Aux[F, QScriptTotal[T, ?]],
+    SP: ShapePreserving[F],
+    RA: Recursive.Aux[A, G],
+    CA: Corecursive.Aux[A, G])
+      : Boolean = {
+    implicit val sp: ShapePreserving[G] = ShapePreserving.prismNT(GtoF)
+
+    (ShapePreserving.shapePreserving[G, A](qs.embed) map isRewriteIdStatus).getOrElse(false)
   }
 
-  def isRewriteFree[T[_[_]]](fq: FreeQS[T]): Boolean = fq match {
-    case FreeQS(SRT(ShiftedRead(_, ExcludeId))) => true
-    case _ => false
+
+  def isRewriteFree[T[_[_]]](fq: FreeQS[T], srcShapePreserving: Option[IdStatus]): Boolean = {
+    (ShapePreserving.shapePreservingF(fq)(κ(srcShapePreserving)) map isRewriteIdStatus).getOrElse(false)
   }
 
   def elideMoreGeneralGuards[T[_[_]], M[_]: Applicative: MonadFsErr, A: Eq]
@@ -89,7 +93,9 @@ def apply[T[_[_]]: BirecursiveT: EqualT, F[_]: Functor, M[_]: Monad: MonadFsErr]
   (implicit
     QC: QScriptCore[T, ?] :<: F,
     EJ: EquiJoin[T, ?] :<: F,
-    SR: Const[ShiftedRead[AFile], ?] :<: F)
+    SR: Const[ShiftedRead[AFile], ?] :<: F,
+    FT: Injectable.Aux[F, QScriptTotal[T, ?]],
+    SP: ShapePreserving[F])
     : Trans[F, M] =
   new Trans[F, M] {
 
@@ -132,10 +138,10 @@ def apply[T[_[_]]: BirecursiveT: EqualT, F[_]: Functor, M[_]: Monad: MonadFsErr]
                 case h :: t => GtoF.reverseGet(
                   QC(Filter(src, t.foldLeft[FreeMap[T]](h)((acc, e) => Free.roll(MFC(MapFuncsCore.And(acc, e)))))))
               })
-        case QC(LeftShift(src, struct, id, repair))
+        case QC(LeftShift(src, struct, id, stpe, repair))
           if (isRewrite[T, F, G, A](GtoF, src.project)) =>
-            elide(struct) ∘
-            (s => GtoF.reverseGet(QC(LeftShift(src, s, id, repair))))
+            (elide(struct) ⊛
+              elideJoinFunc(true, LeftSide, repair))((s, r) => GtoF.reverseGet(QC(LeftShift(src, s, id, stpe, r))))
         case QC(qscript.Map(src, mf))
           if (isRewrite[T, F, G, A](GtoF, src.project)) =>
             elide(mf) ∘
@@ -151,10 +157,11 @@ def apply[T[_[_]]: BirecursiveT: EqualT, F[_]: Functor, M[_]: Monad: MonadFsErr]
               order.traverse(t => elide(t._1).map(x => (x, t._2))))(
               (b0, order0) => GtoF.reverseGet(QC(Sort(src, b0, order0))))
         case EJ(EquiJoin(src, lBranch, rBranch, key, f, combine)) =>
-          val isRewriteSrc = isRewrite[T, F, G, A](GtoF, src.project)
-          val isRewriteL = isRewriteFree(lBranch)
-          val isRewriteR = isRewriteFree(rBranch)
+          val spSrc = ShapePreserving.shapePreservingP(src, GtoF)
+          val isRewriteL = isRewriteFree(lBranch, spSrc)
+          val isRewriteR = isRewriteFree(rBranch, spSrc)
 
+          val isRewriteSrc = isRewrite[T, F, G, A](GtoF, src.project)
           (elideQS(isRewriteSrc, lBranch) ⊛ elideQS(isRewriteSrc, rBranch) ⊛
             (elideLeftJoinKey(isRewriteL, key) >>=
             (k => elideRightJoinKey(isRewriteR, k))) ⊛

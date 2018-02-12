@@ -28,7 +28,7 @@ import scalaz._
 object wrapArrayInLet {
   def apply[T[_[_]]: CorecursiveT, EX[_]: Functor]
     (expr: EX[T[EX]])
-    (implicit ev: ExprOpCoreF :<: EX, ev32: ExprOp3_2F :<: EX)
+    (implicit ev: ExprOpCoreF :<: EX)
       : EX[T[EX]] = expr match {
     case a @ $arrayLitF(_) =>
       $letF(ListMap(DocVar.Name("a") -> a.embed),

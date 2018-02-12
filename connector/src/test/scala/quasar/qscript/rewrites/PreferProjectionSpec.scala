@@ -105,6 +105,7 @@ final class PreferProjectionSpec extends quasar.Qspec with QScriptHelpers {
         fix.Read[AFile](rootDir </> dir("foo") </> file("bar")),
         func.Hole,
         ExcludeId,
+        ShiftType.Array,
         MapFuncCore.StaticMap(List(
           json.str("a") -> func.ProjectIndex(func.RightSide, func.Constant(json.int(0))),
           json.str("b") -> func.ProjectIndex(func.RightSide, func.Constant(json.int(2))),
@@ -135,6 +136,7 @@ final class PreferProjectionSpec extends quasar.Qspec with QScriptHelpers {
           base,
           func.DeleteKeyS(func.Hole, "c"),
           IncludeId,
+          ShiftType.Array,
           MapFuncCore.StaticArray(List(
             func.DeleteKeyS(func.DeleteKeyS(func.LeftSide, "a"), "b"),
             func.RightSide)))
@@ -144,6 +146,7 @@ final class PreferProjectionSpec extends quasar.Qspec with QScriptHelpers {
           base,
           prjFrom(func.Hole, "a", "b"),
           IncludeId,
+          ShiftType.Array,
           MapFuncCore.StaticArray(List(
             prjFrom(func.LeftSide, "c"),
             func.RightSide)))

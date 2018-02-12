@@ -1,0 +1,21 @@
+{
+  "name": "[qa_s02] simple check if a field is undefined",
+
+  "backends": {
+  },
+
+  "data": "functions.data",
+
+    "query": "select
+                c.city ?? c.state as ct,
+                c.details.code ?? c.details.street as cd
+              from functions as c",
+
+  "predicate": "exactly",
+
+  "expected": [
+    {"ct": "Lublin",    "cd": "55420"},
+    {"ct": "Lublin",    "cd": "Red"  },
+    {"ct": "Lubelskie", "cd": "55421"}
+  ]
+}

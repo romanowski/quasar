@@ -1,0 +1,24 @@
+{
+    "name": "[qa_s07] select single field from left side join",
+
+    "backends": {
+        "couchbase":      "timeout",
+        "marklogic_json": "timeout",
+        "marklogic_xml":  "timeout",
+        "mimir":          "ignoreFieldOrder",
+        "postgres":       "ignoreFieldOrder"
+    },
+
+    "data": ["leftData.data", "rightData.data"],
+
+    "query": "select l.b as b from leftData as l inner join rightData as r on l.a = r.a",
+
+    "predicate": "exactly",
+    "ignoreResultOrder": true,
+    "expected": [
+       {"b": 10 },
+       {"b": 10 },
+       {"b": 20 },
+       {"b": 20 }
+    ]
+}

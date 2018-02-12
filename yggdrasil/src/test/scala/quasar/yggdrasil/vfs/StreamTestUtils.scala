@@ -24,10 +24,10 @@ import scalaz.concurrent.Task
 import scodec.bits.ByteVector
 
 private[vfs] object StreamTestUtils {
-  def assertionSink(pred: String => Unit): Sink[POSIXWithTask, ByteVector] = { s =>
+  def assertionSinkBV(pred: ByteVector => Unit): Sink[POSIXWithTask, ByteVector] = { s =>
     s flatMap { bv =>
       Stream suspend {
-        pred(new String(bv.toArray))
+        pred(bv)
 
         val I = Inject[Task, Coproduct[POSIXOp, Task, ?]]
 
@@ -39,4 +39,7 @@ private[vfs] object StreamTestUtils {
       }
     }
   }
+
+  def assertionSink(pred: String => Unit): Sink[POSIXWithTask, ByteVector] =
+    assertionSinkBV(bv => pred(new String(bv.toArray)))
 }

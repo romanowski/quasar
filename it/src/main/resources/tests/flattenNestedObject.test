@@ -2,9 +2,7 @@
     "name": "flatten an object inside a field projection",
     "data": "slamengine_commits.data",
     "backends": {
-        "mimir": "pending",
-        "mongodb_2_6": "pending",
-        "mongodb_3_0": "pending"
+        "mimir": "pending"
     },
     "NB": "this actually works on mimir, but the time mismatch makes it look like a failure",
     "NB": "unmatched expected values 'Set(\"2015-01-29T15:52:37Z\", \"2015-01-29T00:23:14Z\", \"2015-01-26T17:37:40Z\")' is not empty (file:1)",

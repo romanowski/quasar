@@ -31,10 +31,12 @@ import scalaz._, Scalaz._
 /** Operations that access the meta-store via doobie, all wrapped in ConnectionIO
   */
 trait MetaStoreAccess {
-
   //--- Mounts ---
   val fsMounts: ConnectionIO[Map[APath, FileSystemConfig]] =
     Queries.fsMounts.list.map(_.toMap)
+
+  def mounts: ConnectionIO[List[PathedMountConfig]] =
+    Queries.mounts.list
 
   def mountsHavingPrefix(dir: ADir): ConnectionIO[Map[APath, MountType]] =
     Queries.mountsHavingPrefix(dir).list.map(_.toMap)
@@ -48,11 +50,18 @@ trait MetaStoreAccess {
   def insertMount(path: APath, cfg: MountConfig): ConnectionIO[Unit] =
     runOneRowUpdate(Queries.insertMount(path, cfg))
 
+  def insertPathedMountConfig(pmc: PathedMountConfig): ConnectionIO[Unit] =
+    runOneRowUpdate(Queries.insertPathedMountConfig(pmc))
+
   def deleteMount(path: APath): NotFoundErrT[ConnectionIO, Unit] =
     runOneRowUpdateOpt(Queries.deleteMount(path)) toRight NotFound
 
   //--- View Cache ---
   def staleCachedViews(now: Instant): ConnectionIO[List[PathedViewCache]] = Queries.staleCachedViews(now).list
+
+
+  def viewCaches: ConnectionIO[List[PathedViewCache]] = Queries.viewCaches.list
+  def insertViewCache(pv: PathedViewCache): ConnectionIO[Unit] = Queries.insertViewCache(pv.path, pv.vc).run.void
 
   def lookupViewCache(path: AFile): ConnectionIO[Option[ViewCache]] =
     (Queries.lookupViewCache(path) ∘ (_.vc)).option

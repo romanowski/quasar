@@ -1,11 +1,7 @@
 {
     "name": "filter, sort, and limit",
 
-    "backends": {
-        "mongodb_2_6":       "ignoreResultOrder",
-        "mongodb_3_0":       "ignoreResultOrder",
-        "mongodb_read_only": "ignoreResultOrder"
-    },
+    "backends": {},
 
     "data": "zips.data",
 

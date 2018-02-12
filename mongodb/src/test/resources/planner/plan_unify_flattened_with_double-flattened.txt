@@ -13,31 +13,37 @@ Chain
 │  │         [{ "$literal": undefined }]]
 │  │     })
 │  ╰─ ExcludeId
+├─ $UnwindF(DocField(BsonField.Name("f")))
+├─ $ProjectF
+│  ├─ Name("original" -> "$s")
+│  ├─ Name("results" -> {
+│  │       "0": {
+│  │         "$cond": [
+│  │           {
+│  │             "$and": [
+│  │               { "$lte": [{ "$literal": [] }, "$s.comments"] },
+│  │               { "$lt": ["$s.comments", { "$literal": BinData(0, "") }] }]
+│  │           },
+│  │           "$s.comments",
+│  │           [{ "$literal": undefined }]]
+│  │       },
+│  │       "1": {
+│  │         "$cond": [
+│  │           {
+│  │             "$and": [
+│  │               { "$lte": [{ "$literal": [] }, "$f.replyTo"] },
+│  │               { "$lt": ["$f.replyTo", { "$literal": BinData(0, "") }] }]
+│  │           },
+│  │           "$f.replyTo",
+│  │           [{ "$literal": undefined }]]
+│  │       }
+│  │     })
+│  ╰─ ExcludeId
+├─ $ProjectF
+│  ├─ Name("s" -> "$$ROOT")
+│  ├─ Name("f" -> "$results.0")
+│  ╰─ ExcludeId
 ├─ $SimpleMapF
-│  ├─ Flatten
-│  │  ╰─ JsCore(_.f)
-│  ├─ Map
-│  │  ╰─ Obj
-│  │     ├─ Key(s)
-│  │     │  ╰─ Obj
-│  │     │     ├─ Key(original: _.s)
-│  │     │     ╰─ Key(results)
-│  │     │        ╰─ Obj
-│  │     │           ├─ Key(0: (Array.isArray(
-│  │     │           │      (isObject(_.s) && (! Array.isArray(_.s))) ? _.s.comments : undefined) && (isObject(_.s) && (! Array.isArray(_.s)))) ? _.s.comments : undefined)
-│  │     │           ╰─ Key(1: Array.isArray(_.f.replyTo) ? _.f.replyTo : undefined)
-│  │     ╰─ Key(f)
-│  │        ╰─ Access
-│  │           ├─ Access
-│  │           │  ├─ Obj
-│  │           │  │  ├─ Key(original: _.s)
-│  │           │  │  ╰─ Key(results)
-│  │           │  │     ╰─ Obj
-│  │           │  │        ├─ Key(0: (Array.isArray(
-│  │           │  │        │      (isObject(_.s) && (! Array.isArray(_.s))) ? _.s.comments : undefined) && (isObject(_.s) && (! Array.isArray(_.s)))) ? _.s.comments : undefined)
-│  │           │  │        ╰─ Key(1: Array.isArray(_.f.replyTo) ? _.f.replyTo : undefined)
-│  │           │  ╰─ Literal("results")
-│  │           ╰─ Literal("0")
 │  ├─ SubMap
 │  │  ├─ JsCore(_.f)
 │  │  ╰─ Let(m)
@@ -48,34 +54,19 @@ Chain
 │  │           ╰─ JsCore([k, m[k]])
 │  ├─ Flatten
 │  │  ╰─ JsCore(_.f)
-│  ├─ Map
-│  │  ╰─ Obj
-│  │     ├─ Key(s)
-│  │     │  ╰─ Obj
-│  │     │     ├─ Key(identities)
-│  │     │     │  ╰─ Obj
-│  │     │     │     ╰─ Key(qsu39: _.f[0])
-│  │     │     ╰─ Key(value)
-│  │     │        ╰─ Obj
-│  │     │           ├─ Key(original: _.s)
-│  │     │           ╰─ Key(0: _.f[1])
-│  │     ╰─ Key(f)
-│  │        ╰─ Access
-│  │           ├─ Access
-│  │           │  ├─ Access
-│  │           │  │  ├─ Access
-│  │           │  │  │  ├─ Obj
-│  │           │  │  │  │  ├─ Key(identities)
-│  │           │  │  │  │  │  ╰─ Obj
-│  │           │  │  │  │  │     ╰─ Key(qsu39: _.f[0])
-│  │           │  │  │  │  ╰─ Key(value)
-│  │           │  │  │  │     ╰─ Obj
-│  │           │  │  │  │        ├─ Key(original: _.s)
-│  │           │  │  │  │        ╰─ Key(0: _.f[1])
-│  │           │  │  │  ╰─ Literal("value")
-│  │           │  │  ╰─ Literal("original")
-│  │           │  ╰─ Literal("results")
-│  │           ╰─ Literal("1")
+│  ╰─ Scope(Map())
+├─ $ProjectF
+│  ├─ Name("identities" -> { "qsu39": { "$arrayElemAt": ["$f", { "$literal": NumberInt("0") }] } })
+│  ├─ Name("value" -> {
+│  │       "original": "$s",
+│  │       "0": { "$arrayElemAt": ["$f", { "$literal": NumberInt("1") }] }
+│  │     })
+│  ╰─ ExcludeId
+├─ $ProjectF
+│  ├─ Name("s" -> "$$ROOT")
+│  ├─ Name("f" -> "$value.original.results.1")
+│  ╰─ ExcludeId
+├─ $SimpleMapF
 │  ├─ SubMap
 │  │  ├─ JsCore(_.f)
 │  │  ╰─ Let(m)

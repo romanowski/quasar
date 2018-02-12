@@ -29,6 +29,7 @@ import quasar.physical.rdbms.model.DbDataStream
 import quasar.fs.QueryFile.ResultHandle
 
 import doobie.imports.Transactor
+import doobie.hikari.hikaritransactor._
 import scalaz.concurrent.Task
 import scalaz.syntax.applicative._
 import scalaz.{~>}
@@ -36,7 +37,7 @@ import scalaz.{~>}
 trait Interpreter {
   this: Rdbms =>
 
-  def interp(xa: Task[Transactor[Task]]): Task[Eff ~> Task] =
+  def interp(xa: Task[HikariTransactor[Task]]): Task[(Eff ~> Task, Task[Unit])] =
     (
       TaskRef(Map.empty[ReadHandle, DbDataStream])     |@|
         TaskRef(Map.empty[ResultHandle, DbDataStream]) |@|
@@ -46,12 +47,14 @@ trait Interpreter {
         GenUUID.type1[Task]
       )(
       (kvR, kvRes, kvW, x, i, genUUID) =>
-        reflNT[Task]                               :+:
+        (reflNT[Task]                              :+:
           Read.constant[Task, Transactor[Task]](x) :+:
           x.trans                                  :+:
           MonotonicSeq.fromTaskRef(i)              :+:
           genUUID                                  :+:
           KeyValueStore.impl.fromTaskRef(kvR)      :+:
           KeyValueStore.impl.fromTaskRef(kvRes)    :+:
-          KeyValueStore.impl.fromTaskRef(kvW))
+          KeyValueStore.impl.fromTaskRef(kvW),
+      x.shutdown)
+    )
 }

@@ -186,7 +186,7 @@ package object sql {
             case ambiguous          =>
               SemanticError.ambiguousFunctionInvoke(name, ambiguous.map { case(func, from) => (func.name, from)}).left.point[M]
           })
-        case other => EitherT.right(other.embed.point[M])
+        case other => EitherT.rightT(other.embed.point[M])
       }
     }
   }
@@ -212,7 +212,7 @@ package object sql {
             val funcsFromImports = absImportPaths.traverse(d => retrieve(d).map(stats => (stats.decls, stats.imports, d)))
             // All functions in "this" scope along with their own imports
             val allFuncs = funcsFromImports.map((funcsHere, imports, here) :: _)
-            EitherT.right(allFuncs).flatMap(_.traverse { case (funcs, imports, from) =>
+            EitherT.rightT(allFuncs).flatMap(_.traverse { case (funcs, imports, from) =>
               def matchesSignature(func: FunctionDecl[T[Sql]]) = func.name === name && arity === func.args.size
               funcs.filter(matchesSignature).traverse { decl =>
                 val others = funcs.filterNot(matchesSignature) // No recursice calls in SQL^2 so we don't include ourselves

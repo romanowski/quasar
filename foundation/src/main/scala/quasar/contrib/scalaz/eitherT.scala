@@ -38,9 +38,9 @@ trait EitherTInstances extends EitherTInstances0 {
   implicit def eitherTThrowableCatchable[M[_]: Monad]: Catchable[EitherT[M, Throwable, ?]] =
     new Catchable[EitherT[M, Throwable, ?]] {
       def attempt[A](f: EitherT[M, Throwable, A]): EitherT[M, Throwable, Throwable \/ A] =
-        EitherT.right(f.run)
+        EitherT.rightT(f.run)
       def fail[A](err: Throwable): EitherT[M, Throwable, A] =
-        EitherT.left(err.point[M])
+        EitherT.leftT(err.point[M])
     }
 
   implicit def eitherTMonadState[F[_], S, E](implicit F: MonadState[F, S]): MonadState[EitherT[F, E, ?], S] =
@@ -57,7 +57,7 @@ trait EitherTInstances extends EitherTInstances0 {
 trait EitherTInstances0 extends EitherTInstances1 {
   implicit def eitherTMonadReader[F[_], R, E](implicit F: MonadReader[F, R]): MonadReader[EitherT[F, E, ?], R] =
     new MonadReader[EitherT[F, E, ?], R] {
-      def ask = EitherT.right(F.ask)
+      def ask = EitherT.rightT(F.ask)
       def local[A](f: R => R)(fa: EitherT[F, E, A]) = EitherT(F.local(f)(fa.run))
       override def map[A, B](fa: EitherT[F, E, A])(f: A => B) = fa map f
       def bind[A, B](fa: EitherT[F, E, A])(f: A => EitherT[F, E, B]) = fa flatMap f

@@ -7,10 +7,7 @@
     "marklogic_json":    "skip",
     "marklogic_xml":     "skip",
     "mimir":             "skip",
-    "mongodb_2_6":       "ignoreFieldOrder",
-    "mongodb_3_0":       "ignoreFieldOrder",
     "mongodb_3_2":       "ignoreFieldOrder",
-    "mongodb_read_only": "ignoreFieldOrder",
     "spark_hdfs":        "skip",
     "spark_local":       "skip",
     "spark_cassandra":   "skip"

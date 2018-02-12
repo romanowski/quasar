@@ -168,7 +168,7 @@ object Mounter {
       req => free.lift(unmount(req)).into[S],
       new PathStore[Free[S, ?], MountConfig] {
         def get(path: APath) =
-          EitherT.right(mountConfigs.get(path))
+          EitherT.rightT(mountConfigs.get(path))
         def descendants(dir: ADir) =
           mountConfigs.keys.map(_
             .filter(p => (dir: APath) ≠ p && p.relativeTo(dir).isDefined)

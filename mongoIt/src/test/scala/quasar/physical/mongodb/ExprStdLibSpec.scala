@@ -60,7 +60,6 @@ class MongoDbExprStdLibSpec extends MongoDbStdLibSpec {
     case (date.Now, _)            => Skipped("Returns correct result, but wrapped into Data.Dec instead of Data.Interval").left
 
     case (date.StartOfDay, _) => notHandled.left
-    case (date.TimeOfDay, _) if is2_6(backend) => Skipped("not implemented in aggregation on MongoDB 2.6").left
 
     //FIXME modulo and trunc (which is defined in terms of modulo) cause the
     //mongo docker container to crash (with quite high frequency but not always).
@@ -68,11 +67,6 @@ class MongoDbExprStdLibSpec extends MongoDbStdLibSpec {
     //cause failures when marked as pending (but with low frequency)
     case (math.Modulo, _) => Skipped("sometimes causes mongo container crash").left
     case (math.Trunc, _) => Skipped("sometimes causes mongo container crash").left
-    case (math.Power, _) if lt3_2(backend) => Skipped("not implemented in aggregation on MongoDB < 3.2").left
-    //These 3 derived funcs are defined in terms of Power which is not available in MongoDb < 3.2
-    case (math.CeilScale, _) if lt3_2(backend) => Skipped("not implemented in aggregation on MongoDB < 3.2").left
-    case (math.FloorScale, _) if lt3_2(backend) => Skipped("not implemented in aggregation on MongoDB < 3.2").left
-    case (math.RoundScale, _) if lt3_2(backend) => Skipped("not implemented in aggregation on MongoDB < 3.2").left
 
     case (relations.Eq, List(Data.Date(_), Data.Timestamp(_))) => notHandled.left
     case (relations.Lt, List(Data.Date(_), Data.Timestamp(_))) => notHandled.left
@@ -111,26 +105,20 @@ class MongoDbExprStdLibSpec extends MongoDbStdLibSpec {
 
     val bsonVersion = MongoQueryModel.toBsonVersion(queryModel)
     queryModel match {
+      case MongoQueryModel.`3.4.4` =>
+        (MongoDbPlanner.getExpr[Fix, PlanStdT, Expr3_4_4](
+          FuncHandler.handle3_4_4(bsonVersion), StaticHandler.handle)(mf).run(runAt) >>= (build[Workflow3_2F](_, coll)))
+          .map(wf => (Crystallize[Workflow3_2F].crystallize(wf).inject[WorkflowF], QuasarSigilName))
+
       case MongoQueryModel.`3.4` =>
         (MongoDbPlanner.getExpr[Fix, PlanStdT, Expr3_4](
-          FuncHandler.handle3_4(bsonVersion), StaticHandler.v3_2)(mf).run(runAt) >>= (build[Workflow3_2F](_, coll)))
+          FuncHandler.handle3_4(bsonVersion), StaticHandler.handle)(mf).run(runAt) >>= (build[Workflow3_2F](_, coll)))
           .map(wf => (Crystallize[Workflow3_2F].crystallize(wf).inject[WorkflowF], QuasarSigilName))
 
       case MongoQueryModel.`3.2` =>
         (MongoDbPlanner.getExpr[Fix, PlanStdT, Expr3_2](
-          FuncHandler.handle3_2(bsonVersion), StaticHandler.v3_2)(mf).run(runAt) >>= (build[Workflow3_2F](_, coll)))
+          FuncHandler.handle3_2(bsonVersion), StaticHandler.handle)(mf).run(runAt) >>= (build[Workflow3_2F](_, coll)))
           .map(wf => (Crystallize[Workflow3_2F].crystallize(wf).inject[WorkflowF], QuasarSigilName))
-
-      case MongoQueryModel.`3.0` =>
-        (MongoDbPlanner.getExpr[Fix, PlanStdT, Expr3_0](
-          FuncHandler.handle3_0(bsonVersion), StaticHandler.v2_6)(mf).run(runAt) >>= (build[Workflow2_6F](_, coll)))
-          .map(wf => (Crystallize[Workflow2_6F].crystallize(wf).inject[WorkflowF], QuasarSigilName))
-
-      case _                     =>
-        (MongoDbPlanner.getExpr[Fix, PlanStdT, Expr2_6](
-          FuncHandler.handle2_6(bsonVersion), StaticHandler.v2_6)(mf).run(runAt) >>= (build[Workflow2_6F](_, coll)))
-          .map(wf => (Crystallize[Workflow2_6F].crystallize(wf).inject[WorkflowF], QuasarSigilName))
-
     }
   }
 }

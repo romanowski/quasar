@@ -21,6 +21,7 @@ import quasar.fp._
 import quasar.db.DbConnectionConfig
 import quasar.effect.LiftedOps
 import quasar.metastore.MetaStore
+import quasar.metastore.MetaStore.{ShouldCopy, ShouldInitialize}
 
 import scalaz._, Scalaz._
 import scalaz.concurrent.Task
@@ -31,7 +32,7 @@ object MetaStoreLocation {
 
   final case object Get extends MetaStoreLocation[DbConnectionConfig]
 
-  final case class Set(conn: DbConnectionConfig, initialize: Boolean)
+  final case class Set(conn: DbConnectionConfig, initialize: ShouldInitialize, copy: ShouldCopy)
     extends MetaStoreLocation[String \/ Unit]
 
   final class Ops[S[_]](implicit val ev: MetaStoreLocation :<: S) extends LiftedOps[MetaStoreLocation, S] {
@@ -39,8 +40,8 @@ object MetaStoreLocation {
     def get: Free[S, DbConnectionConfig] =
       lift(Get)
 
-    def set(conn: DbConnectionConfig, initialize: Boolean): Free[S, String \/ Unit] =
-      lift(Set(conn, initialize))
+    def set(conn: DbConnectionConfig, initialize: ShouldInitialize, copy: ShouldCopy): Free[S, String \/ Unit] =
+      lift(Set(conn, initialize, copy))
   }
 
   object Ops {
@@ -53,11 +54,18 @@ object MetaStoreLocation {
     def default(ref: TaskRef[MetaStore], persist: DbConnectionConfig => MainTask[Unit]): MetaStoreLocation ~> Task =
       λ[MetaStoreLocation ~> Task] {
         case Get => ref.read.map(_.connectionInfo)
-        case Set(conn, initialize) =>
+        case Set(conn, initialize, copy) =>
           (for {
-            currentSchemas <- ref.read.map(_.schemas).liftM[MainErrT]
+            // Keep ref to current metastore
+            currentMetastore <- ref.read.liftM[MainErrT]
+            // Our current schemas
+            currentSchemas   =  currentMetastore.schemas
             // Try connecting to the new metastore location
-            m <- MetaStore.connect(conn, initialize, currentSchemas).leftMap(_.message)
+            m  <- MetaStore.connect(conn, initialize, currentSchemas, currentMetastore.copyFromTo).leftMap(_.message)
+            // Copy metastore if requested
+            _ <- EitherT[Task, Throwable, Unit](
+              copy.v.whenM(currentMetastore.copyFromTo.traverse(_(currentMetastore.transactor)(m.transactor))).attempt)
+                .leftMap(e => s"Unable to copy metastore, ${e.getMessage}")
             // Persist the change, if persisting fails, shutdown the new metastore connection and fail the change
             _ <- EitherT(persist(m.connectionInfo).foldM(persistFailure => m.shutdown.as(persistFailure.left), _ => ().right.point[Task]))
             // We successfully connected to the new metastore and persisted the change to the config file
@@ -71,7 +79,7 @@ object MetaStoreLocation {
     def constant(config: DbConnectionConfig): MetaStoreLocation ~> Task =
       λ[MetaStoreLocation ~> Task] {
         case Get => config.point[Task]
-        case Set(conn, initialize) => Task.fail(new Exception("This implementation does not allow changing MetaStore"))
+        case Set(conn, initialize, copy) => Task.fail(new Exception("This implementation does not allow changing MetaStore"))
       }
   }
 }

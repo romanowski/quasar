@@ -39,7 +39,7 @@ class ShiftReadSpec extends quasar.Qspec with QScriptHelpers with TreeMatchers {
       val qScript: Fix[QS] =
         chainQS(
           qsdsl.fix.Read[AFile](sampleFile),
-          qsdsl.fix.LeftShift(_, qsdsl.func.Hole, ExcludeId, qsdsl.func.RightSide))
+          qsdsl.fix.LeftShift(_, qsdsl.func.Hole, ExcludeId, ShiftType.Array, qsdsl.func.RightSide))
 
       val newQScript: Fix[QST] =
         qScript.codyna(
@@ -59,6 +59,7 @@ class ShiftReadSpec extends quasar.Qspec with QScriptHelpers with TreeMatchers {
           qsdsl.fix.Read[AFile](rootDir </> dir("foo") </> file("bar")),
           qsdsl.func.Hole,
           ExcludeId,
+          ShiftType.Array,
           qsdsl.func.RightSide),
         Nil,
         List(ReduceFuncs.Count(qsdsl.func.Hole)),

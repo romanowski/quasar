@@ -26,11 +26,11 @@ import quasar.fs.PathError.pathNotFound
 import quasar.fs.mount._
 import quasar.fp.ski._
 import quasar.main._
+import quasar.metastore.MetaStore.{ShouldCopy, ShouldInitialize}
 import quasar.metastore.MetaStoreFixture
 import quasar.sql._
 
 import scala.StringContext
-
 import pathy.Path._
 import scalaz._, Scalaz._
 import scalaz.concurrent.Task
@@ -72,9 +72,9 @@ class ApiSpec extends quasar.Qspec {
           for {
             _             <- mount.mountOrReplace(sampleMountPath, sampleMount, false)
             mountIsThere  <- mount.lookupConfig(sampleMountPath).run.run.map(_.isDefined)
-            _             <- MetaStoreLocation.Ops[CoreEff].set(otherMetaConf, initialize = true)
+            _             <- MetaStoreLocation.Ops[CoreEff].set(otherMetaConf, initialize = ShouldInitialize(true), copy = ShouldCopy(false))
             noLongerThere <- mount.lookupConfig(sampleMountPath).run.run.map(_.empty)
-            _             <- MetaStoreLocation.Ops[CoreEff].set(firstMetaConf, initialize = true)
+            _             <- MetaStoreLocation.Ops[CoreEff].set(firstMetaConf, initialize = ShouldInitialize(true), copy = ShouldCopy(false))
             thereAgain    <- mount.lookupConfig(sampleMountPath).run.run.map(_.isDefined)
           } yield {
             mountIsThere must_=== true
@@ -89,7 +89,7 @@ class ApiSpec extends quasar.Qspec {
       (for {
         metaConf <- MetaStoreFixture.createNewTestMetaStoreConfig
         result <- testProgram(metaConf.some) {
-          MetaStoreLocation.Ops[CoreEff].set(metaConf, initialize = true)
+          MetaStoreLocation.Ops[CoreEff].set(metaConf, initialize = ShouldInitialize(true), copy = ShouldCopy(false))
         }
       } yield result must_= ().right).unsafePerformSync
     }

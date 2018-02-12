@@ -55,7 +55,7 @@ class QueryFilesSpec extends FileSystemTest[BackendEffect](FileSystemTest.allFsU
           lpr.read(src),
           lpr.constant(Data._str(from)))))
 
-  fileSystemShould { (fs, _) =>
+  fileSystemShould { (fs, nonChFs) =>
     "Querying Files" should {
       step(deleteForQuery(fs.setupInterpM).runVoid)
 
@@ -102,10 +102,8 @@ class QueryFilesSpec extends FileSystemTest[BackendEffect](FileSystemTest.allFsU
           .runEither must beRight(containTheSameElementsAs(expectedNodes))
       }
 
-      // TODO: Our chrooting prevents this from working, maybe we need a
-      //       spec that does no chrooting and writes no files?
-      "listing root dir should succeed" >> pending {
-        runT(fs.testInterpM)(query.ls(rootDir)).runEither must beRight
+      "listing root dir should always succeed even if mount is completely empty" >> {
+        runT(nonChFs.testInterpM)(query.ls(rootDir)).runEither must beRight
       }
 
       "listing nonexistent directory returns dir NotFound" >> pendingFor(fs)(Set("mimir")) {

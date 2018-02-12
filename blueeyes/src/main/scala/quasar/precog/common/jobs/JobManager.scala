@@ -18,7 +18,6 @@ package quasar.precog.common.jobs
 
 import quasar.blueeyes.json._
 import quasar.precog.MimeType
-import quasar.precog.common.security._
 
 import java.time.LocalDateTime
 
@@ -43,7 +42,7 @@ trait JobManager[M[+_]] { self =>
    * the job will be put in the Started state, otherwise it will be in the
    * NotStarted state until `start(...)` is run.
    */
-  def createJob(auth: APIKey, name: String, jobType: String, data: Option[JValue], started: Option[LocalDateTime]): M[Job]
+  def createJob(name: String, jobType: String, data: Option[JValue], started: Option[LocalDateTime]): M[Job]
 
   /**
    * Returns the Job with the given ID if it exists.
@@ -53,7 +52,7 @@ trait JobManager[M[+_]] { self =>
   /**
    * Returns a list of all currently running jobs
    */
-  def listJobs(apiKey: APIKey): M[Seq[Job]]
+  def listJobs: M[Seq[Job]]
 
   /**
    * Updates a job's status to `value`. If a `prevStatus` is provided, then
@@ -133,12 +132,12 @@ trait JobManager[M[+_]] { self =>
     private val transformStreamForward: StreamT[M, ?] ~> StreamT[N, ?] =
       Hoist[StreamT].hoist[M, N](t)
 
-    def createJob(auth: APIKey, name: String, jobType: String, data: Option[JValue], started: Option[LocalDateTime]): N[Job] =
-      t(self.createJob(auth, name, jobType, data, started))
+    def createJob(name: String, jobType: String, data: Option[JValue], started: Option[LocalDateTime]): N[Job] =
+      t(self.createJob(name, jobType, data, started))
 
     def findJob(job: JobId): N[Option[Job]] = t(self.findJob(job))
 
-    def listJobs(apiKey: APIKey): N[Seq[Job]] = t(self.listJobs(apiKey))
+    def listJobs: N[Seq[Job]] = t(self.listJobs)
 
     def updateStatus(job: JobId, prevStatus: Option[StatusId], msg: String, progress: BigDecimal, unit: String, extra: Option[JValue]): N[Either[String, Status]] =
       t(self.updateStatus(job, prevStatus, msg, progress, unit, extra))

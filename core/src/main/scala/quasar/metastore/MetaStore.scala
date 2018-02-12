@@ -21,20 +21,26 @@ import quasar.console.stdout
 import quasar.db._
 import quasar.fs.mount.MountingsConfig
 
-import argonaut._
+import argonaut.{DecodeJson, Json}
 import doobie.util.transactor.Transactor
 import doobie.free.connection.ConnectionIO
 import doobie.syntax.connectionio._
-import scalaz._
-import Scalaz._
+import scalaz._, Scalaz._
 import scalaz.concurrent.Task
 
-final case class MetaStore private (connectionInfo: DbConnectionConfig, trans: StatefulTransactor, schemas: List[Schema[Int]]) {
+final case class MetaStore private (
+  connectionInfo: DbConnectionConfig, trans: StatefulTransactor, 
+  schemas: List[Schema[Int]], copyFromTo: List[Transactor[Task] => Transactor[Task] => Task[Unit]]
+) {
   def shutdown: Task[Unit] = trans.shutdown
   def transactor: Transactor[Task] = trans.transactor
 }
 
 object MetaStore {
+
+  final case class ShouldInitialize(v: Boolean)
+  final case class ShouldCopy(v: Boolean)
+
   /**
     * Attempts to connect to a Quasar MetaStore. Will make sure the schema matches the expected Schema and print
     * a line to the console to inform the user that we just connected to a given MetaStore location once the
@@ -47,16 +53,34 @@ object MetaStore {
     * @param schemas The Schemas that the underlying database is expected to have. You probably want to pass in
     *               `quasar.metastore.Schema.schema`, but additional Schemas may be desirable if the application
     *               needs to store additional information in the MetaStore
+    * @param copyFromTo A list of metastore copy methods which instruct the metastore to copy itself to its target
+    *                   metastore. May be Nil if copy isn't needed.
     * @return A `MetaStore` object containing the `transactor` to use to perform operation on the MetaStore as
     *         well as it's location and expected Schema
     */
-  def connect(dbConfig: DbConnectionConfig, initializeOrUpdate: Boolean, schemas: List[Schema[Int]]): EitherT[Task, MetastoreFailure, MetaStore] =
+  def connect(
+    dbConfig: DbConnectionConfig, initializeOrUpdate: ShouldInitialize,
+    schemas: List[Schema[Int]], copyFromTo: List[Transactor[Task] => Transactor[Task] => Task[Unit]]
+  ): EitherT[Task, MetastoreFailure, MetaStore] =
     for {
       tx <- poolingTransactor(DbConnectionConfig.connectionInfo(dbConfig), DefaultConfig).leftMap(f => f:MetastoreFailure)
-      _  <- onFailOrLeft(initializeOrUpdate.whenM(schemas.traverse(this.initializeOrUpdate(_, tx.transactor, None))) >>
+      _  <- onFailOrLeft(initializeOrUpdate.v.whenM(schemas.traverse(this.initializeOrUpdate(_, tx.transactor, None))) >>
             schemas.traverse(verifySchema(_, tx.transactor)) >>
             stdout(s"Using metastore: ${DbConnectionConfig.connectionInfo(dbConfig).url}").liftM[EitherT[?[_], MetastoreFailure, ?]])(tx.shutdown)
-    } yield MetaStore(dbConfig, tx, schemas)
+    } yield MetaStore(dbConfig, tx, schemas, copyFromTo)
+
+  final case class copyTable(fromTrans: Transactor[Task], toTrans: Transactor[Task]) {
+    def apply[A](src: ConnectionIO[List[A]], dst: A => ConnectionIO[Unit]): Task[Unit] =
+      fromTrans.trans.apply(src).flatMap(_.traverse(p => toTrans.trans.apply(dst(p)))).void
+  }
+
+  def copy(fromTrans: Transactor[Task])(toTrans: Transactor[Task]): Task[Unit] = {
+    val ct = copyTable(fromTrans, toTrans)
+
+    // NB: New tables added to the metasotre will need to be copied
+    ct(MetaStoreAccess.viewCaches, MetaStoreAccess.insertViewCache _) >>
+    ct(MetaStoreAccess.mounts, MetaStoreAccess.insertPathedMountConfig _)
+  }
 
   private def onFailOrLeft[E, A](t: EitherT[Task, E, A])(f: Task[Unit]):EitherT[Task, E, A] =
     EitherT(t.run.onFinish {

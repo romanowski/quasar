@@ -18,16 +18,6 @@ package quasar.mimir
 
 import quasar.blueeyes.util.Clock
 import quasar.niflheim.{Chef, V1CookedBlockFormat, V1SegmentFormat, VersionedSegmentFormat, VersionedCookedBlockFormat}
-import quasar.precog.common.accounts.AccountFinder
-
-import quasar.precog.common.security.{
-  APIKey,
-  APIKeyFinder,
-  APIKeyManager,
-  DirectAPIKeyFinder,
-  InMemoryAPIKeyManager,
-  PermissionsFinder
-}
 
 import quasar.yggdrasil.table.VFSColumnarTableModule
 import quasar.yggdrasil.vfs.SerialVFS
@@ -54,7 +44,6 @@ import scalaz.concurrent.Task
 import scalaz.std.scalaFuture.futureInstance
 
 import java.io.File
-import java.time.Instant
 import java.util.concurrent.CountDownLatch
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -102,21 +91,6 @@ final class Precog private (dataDir0: File)
     Precog.startTask(gated.run, vfsLatch.countDown()).unsafePerformSync
     vfsLatch.await()      // sigh....
   }
-
-  // for the time being, do everything with this key
-  def RootAPIKey: Future[APIKey] = emptyAPIKeyManager.rootAPIKey
-
-  // Members declared in quasar.yggdrasil.vfs.ActorVFSModule
-  private lazy val emptyAPIKeyManager: APIKeyManager[Future] =
-    new InMemoryAPIKeyManager[Future](Clock.System)
-
-  private val apiKeyFinder: APIKeyFinder[Future] =
-    new DirectAPIKeyFinder[Future](emptyAPIKeyManager)
-
-  private val accountFinder: AccountFinder[Future] = AccountFinder.Singleton(RootAPIKey)
-
-  def permissionsFinder: PermissionsFinder[Future] =
-    new PermissionsFinder(apiKeyFinder, accountFinder, Instant.EPOCH)
 
   val actorSystem: ActorSystem =
     ActorSystem("nihdbExecutorActorSystem", classLoader = Some(getClass.getClassLoader))

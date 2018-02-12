@@ -1,0 +1,57 @@
+{
+    "name": "clothing orders by price paid",
+    "data": ["../customers.data", "../orders.data", "../ordered_items.data", "../inventory_items.data"],
+    "backends": {
+        "couchbase":         "skip",
+        "marklogic_json":    "pendingIgnoreFieldOrder",
+        "mimir":             "pendingIgnoreFieldOrder",
+        "mongodb_3_2":       "skip",
+        "mongodb_3_4":       "skip",
+        "mongodb_read_only": "skip"
+    },
+    "NB": "mimir pending due to mangling of timestamp string",
+    "NB": "mongo skipped due to timeout",
+    "query": "
+      select
+              o.order_key as OrderKey
+          ,   o.purchase_date as PurchaseDate
+          ,   c.last_name || \", \" || c.first_name as Name
+          ,   c.city as City
+          ,   c.state as State
+          ,   i.clothing_size as Size
+          ,   i.clothing_type as Type
+          ,   i.clothing_color as Color
+          ,   i.price as UnitPrice
+          ,   oi.qty as Quantity
+          ,   i.price * oi.qty as PricePaid
+          ,   sum(i.price * oi.qty) as TotalPaid
+          ,   i.clothing_brand as Brand
+      from
+              `../customers` as c
+      join
+              `../orders` as o
+          on
+              c.customer_key = o.customer_key
+      join
+              `../ordered_items` as oi
+
+          on
+              oi.order_key = o.order_key
+      join
+              `../inventory_items` as i
+          on
+              i.item_key = oi.item_key
+      group by
+              i.price * oi.qty
+    ",
+
+    "predicate": "exactly",
+    "ignoreResultOrder": true,
+    "expected": [
+      { "OrderKey": "order_key_4", "PurchaseDate": "2009-04-11T13:21:48Z", "Name": "Benitez, German", "City": "BILLINGS", "State": "MT", "Size": "L", "Type": "socks", "Color": "black", "UnitPrice": 7.7, "Quantity": 2, "PricePaid": 15.4, "TotalPaid": 15.4, "Brand": "Fancy Clothes, Inc." }
+    , { "OrderKey": "order_key_4", "PurchaseDate": "2009-04-11T13:21:48Z", "Name": "Benitez, German", "City": "BILLINGS", "State": "MT", "Size": "L", "Type": "t-shirt", "Color": "blue", "UnitPrice": 13.48, "Quantity": 1, "PricePaid": 13.48, "TotalPaid": 13.48, "Brand": "Fancy Clothes, Inc." }
+    , { "OrderKey": "order_key_1", "PurchaseDate": "2008-01-16T10:28:32Z", "Name": "Porter, Cyrus", "City": "GRAYTOWN", "State": "OH", "Size": "M", "Type": "t-shirt", "Color": "blue", "UnitPrice": 8.82, "Quantity": 2, "PricePaid": 17.64, "TotalPaid": 17.64, "Brand": "California Clothing, Inc." }
+    , { "OrderKey": "order_key_0", "PurchaseDate": "2016-08-15T17:43:22Z", "Name": "Porter, Cyrus", "City": "GRAYTOWN", "State": "OH", "Size": "XL", "Type": "socks", "Color": "yellow", "UnitPrice": 4.4, "Quantity": 2, "PricePaid": 8.8, "TotalPaid": 8.8, "Brand": "Acme, Inc." }
+    , { "OrderKey": "order_key_0", "PurchaseDate": "2016-08-15T17:43:22Z", "Name": "Porter, Cyrus", "City": "GRAYTOWN", "State": "OH", "Size": "2XL", "Type": "tie", "Color": "blue", "UnitPrice": 12.42, "Quantity": 2, "PricePaid": 24.84, "TotalPaid": 24.84, "Brand": "California Clothing, Inc." }
+    ]
+}

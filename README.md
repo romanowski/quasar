@@ -57,8 +57,6 @@ Of particular interest are the following two scripts:
 Quasar supports the following datastores:
 
 ```
-quasar_mongodb_2_6
-quasar_mongodb_3_0
 quasar_mongodb_read_only
 quasar_mongodb_3_2
 quasar_mongodb_3_4
@@ -74,7 +72,7 @@ Knowing which backend datastores are supported you can create and configure dock
 if you wanted to run integration tests with mongo, marklogic, and couchbase you would use:
 
 ```
-./setupContainers -u quasar_metastore,quasar_mongodb_3_0,quasar_marklogic_xml,quasar_couchbase
+./setupContainers -u quasar_metastore,quasar_mongodb_3_4,quasar_marklogic_xml,quasar_couchbase
 ```
 
 Note: `quasar_metastore` is always needed to run integration tests.
@@ -96,7 +94,7 @@ After running this command your `testing.conf` file should look similar to this:
 postgresql_metastore="{\"host\":\"192.168.99.101\",\"port\":5432,\"database\":\"metastore\",\"userName\":\"postgres\",\"password\":\"\"}"
 couchbase="couchbase://192.168.99.101/beer-sample?password=&docTypeKey=type&socketConnectTimeoutSeconds=15"
 marklogic_xml="xcc://marklogic:marklogic@192.168.99.101:8000/Documents?format=xml"
-mongodb_3_0="mongodb://192.168.99.101:27019"
+mongodb_3_4="mongodb://192.168.99.101:27022"
 ```
 
 IP's will vary depending on your docker environment. In addition the scripts assume you have docker and docker-compose installed.
@@ -121,7 +119,7 @@ java -jar [<path to jar>] [-c <config file>]
 
 As a command-line REPL user, to work with a fully functioning REPL you will need the metadata store and a mount point. See [here](#full-testing-prerequisite-docker-and-docker-compose) for instructions on creating the metadata store backend using docker.
 
-Once you have a running metastore you can start the web api service with [these](#web-jar) instructions and issue curl commands 
+Once you have a running metastore you can start the web api service with [these](#web-jar) instructions and issue curl commands
 of the following format to create new mount points.
 
 ```bash
@@ -951,6 +949,9 @@ An optional `initialize` query parameter can be supplied so that Quasar automati
 metastore after a successful connection if it has not already been initialized. If this parameter is omitted
 and the new metastore has not been initialized, the request will fail with a message to the effect that the
 new metastore has not been initialized.
+
+An optional `copy` query parameter can be supplied to instruct Quasar to copy the current
+metastore to a new empty metastore.
 
 An example request body:
 

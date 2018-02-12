@@ -1,0 +1,15 @@
+{
+  "name": "[qa_s06] select all self union",
+
+  "backends": {
+  },
+
+  "data": "simple_union.data",
+
+  "query": "select * from (select * from simple_union union select * from simple_union) order by a",
+
+  "predicate": "exactly",
+
+  "expected": [{"a": "1", "b": 1},
+               {"a": "2", "b": 2}]
+}

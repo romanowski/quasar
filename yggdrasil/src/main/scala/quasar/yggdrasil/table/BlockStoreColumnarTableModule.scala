@@ -20,7 +20,6 @@ package table
 import quasar.blueeyes._
 import quasar.precog.BitSet
 import quasar.precog.common._
-import quasar.precog.common.security._
 import quasar.yggdrasil.bytecode._
 import quasar.yggdrasil.jdbm3._
 
@@ -998,7 +997,7 @@ trait BlockStoreColumnarTableModule[M[+ _]] extends ColumnarTableModule[M] {
       else super.join(left1, right1, orderHint)(leftKeySpec, rightKeySpec, joinSpec)
     }
 
-    def load(table: Table, apiKey: APIKey, tpe: JType): EitherT[M, vfs.ResourceError, Table]
+    def load(table: Table, tpe: JType): EitherT[M, vfs.ResourceError, Table]
   }
 
   abstract class Table(slices: StreamT[M, Slice], size: TableSize) extends ColumnarTable(slices, size) {
@@ -1047,7 +1046,7 @@ trait BlockStoreColumnarTableModule[M[+ _]] extends ColumnarTableModule[M] {
 
     def sort(sortKey: TransSpec1, sortOrder: DesiredSortOrder, unique: Boolean = false): M[Table] = M.point(this)
 
-    def load(apiKey: APIKey, tpe: JType) = Table.load(this, apiKey, tpe)
+    def load(tpe: JType) = Table.load(this, tpe)
 
     override def compact(spec: TransSpec1, definedness: Definedness = AnyDefined): Table = this
 
@@ -1078,7 +1077,7 @@ trait BlockStoreColumnarTableModule[M[+ _]] extends ColumnarTableModule[M] {
     def sort(sortKey: TransSpec1, sortOrder: DesiredSortOrder, unique: Boolean = false): M[Table] =
       toExternalTable.sort(sortKey, sortOrder, unique)
 
-    def load(apiKey: APIKey, tpe: JType): EitherT[M, vfs.ResourceError, Table] = Table.load(this, apiKey, tpe)
+    def load(tpe: JType): EitherT[M, vfs.ResourceError, Table] = Table.load(this, tpe)
 
     override def force: M[Table] = M.point(this)
 
@@ -1100,7 +1099,7 @@ trait BlockStoreColumnarTableModule[M[+ _]] extends ColumnarTableModule[M] {
     import SliceTransform._
     import trans._
 
-    def load(apiKey: APIKey, tpe: JType) = Table.load(this, apiKey, tpe)
+    def load(tpe: JType) = Table.load(this, tpe)
 
     def toInternalTable(limit0: Int): EitherT[M, ExternalTable, InternalTable] = {
       val limit = limit0.toLong

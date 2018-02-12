@@ -1,0 +1,15 @@
+{
+  "name": "[qa_s06] select columns self union",
+
+  "backends": {
+  },
+
+  "data": "simple_union.data",
+
+  "query": "select * from (select a as a from simple_union union select to_string(b) as a from simple_union) order by a desc",
+
+  "predicate": "exactly",
+
+  "expected": [{"a": "2"},
+               {"a": "1"}]
+}

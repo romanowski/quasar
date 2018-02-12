@@ -1,0 +1,16 @@
+{
+  "name": "[qa_s02] string case converting",
+
+  "data": "stringFunctionsCase.data",
+
+  "query": "select upper(lowr) as l2u, upper(uppr) as u2u, upper(mixed) as m2u, lower(lowr) as l2l, lower(uppr) as u2l, lower(mixed) as m2l from stringFunctionsCase",
+
+  "predicate": "exactly",
+  "ignoreResultOrder": false,
+
+  "ignoreFieldOrder": true,
+
+  "expected": [
+    {"l2u": "LOWER", "u2u": "UPPER", "m2u": "MIXED", "l2l": "lower", "u2l": "upper", "m2l": "mixed"}
+  ]
+}

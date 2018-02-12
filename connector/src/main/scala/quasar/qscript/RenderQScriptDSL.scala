@@ -311,9 +311,14 @@ object RenderQScriptDSL {
           case Map(src, f) =>
             DSLTree(base, "Map", (A(base, src).right :: freeMap(base, f).right :: Nil).some)
 
-          case LeftShift(src, struct, idStatus, repair) =>
+          case LeftShift(src, struct, idStatus, shiftType, repair) =>
             DSLTree(base, "LeftShift",
-              (A(base, src).right :: freeMap(base, struct).right :: idStatus.shows.left :: joinFunc(base, repair).right :: Nil).some)
+              (A(base, src).right ::
+                freeMap(base, struct).right ::
+                idStatus.shows.left ::
+                ("ShiftType." + shiftType.shows).left ::
+                joinFunc(base, repair).right ::
+                Nil).some)
 
           case Reduce(src, bucket, reducers, repair) =>
             val bucketArg = DSLTree("", "List", bucket.map(freeMap(base, _).right).some)

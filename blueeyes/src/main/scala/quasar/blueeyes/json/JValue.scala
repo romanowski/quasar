@@ -18,7 +18,6 @@ package quasar.blueeyes.json
 
 import quasar.Data
 import quasar.blueeyes._
-import quasar.precog.ToString
 
 import scalaz._, Scalaz._
 
@@ -32,10 +31,11 @@ import java.lang.Double.isInfinite
 /**
   * Data type for Json AST.
   */
-sealed trait JValue extends Product with Ordered[JValue] with ToString {
+sealed trait JValue extends Product with Ordered[JValue] {
   def compare(that: JValue): Int = this.typeIndex compare that.typeIndex
-  def to_s = this.renderPretty
+  override def toString = this.renderPretty
 }
+
 sealed trait JContainer extends JValue {
   assert(contained forall (_ != null), contained)
 

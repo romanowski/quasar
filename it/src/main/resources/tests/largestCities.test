@@ -2,10 +2,7 @@
     "name": "largest cities",
 
     "backends": {
-        "mimir":"ignoreFieldOrder",
-        "mongodb_2_6": "ignoreResultOrder",
-        "mongodb_3_0": "ignoreResultOrder",
-        "mongodb_read_only": "ignoreResultOrder"
+        "mimir":"ignoreFieldOrder"
     },
     "data": "zips.data",
     "query": "select city, state, sum(pop) as total from zips group by city, state order by sum(pop) desc limit 10",

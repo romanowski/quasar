@@ -18,7 +18,7 @@ package quasar.yggdrasil
 package table
 
 import quasar.blueeyes._, json._
-import quasar.precog.common._, security._
+import quasar.precog.common._
 import quasar.precog.TestSupport._, Gen._
 import quasar.yggdrasil.bytecode.JType
 
@@ -50,7 +50,7 @@ trait TestColumnarTableModule[M[+_]] extends ColumnarTableModuleTestSupport[M] {
 
   class Table(slices: StreamT[M, Slice], size: TableSize) extends ColumnarTable(slices, size) {
     import trans._
-    def load(apiKey: APIKey, jtpe: JType) = sys.error("todo")
+    def load(jtpe: JType) = sys.error("todo")
     def sort(sortKey: TransSpec1, sortOrder: DesiredSortOrder, unique: Boolean = false) = M.point(this)
     def groupByN(groupKeys: Seq[TransSpec1], valueSpec: TransSpec1, sortOrder: DesiredSortOrder = SortAscending, unique: Boolean = false): M[Seq[Table]] = sys.error("todo")
   }

@@ -31,78 +31,41 @@ import simulacrum.typeclass
 
 @typeclass trait FuncHandler[IN[_]] {
 
-  def handleOpsCore[EX[_]: Functor](v: BsonVersion, trunc: Free[EX, ?] ~> Free[EX, ?])
-    (implicit e26: ExprOpCoreF :<: EX)
+  def handleOpsCore[EX[_]: Functor](v: BsonVersion)
+    (implicit e32: ExprOpCoreF :<: EX)
       : IN ~> OptionFree[EX, ?]
 
-  def handleOps3_0[EX[_]: Functor](v: BsonVersion, trunc: Free[EX, ?] ~> Free[EX, ?])
-    (implicit e26: ExprOpCoreF :<: EX, e30: ExprOp3_0F :<: EX)
+  def handleOps3_4[EX[_]: Functor](v: BsonVersion)
+    (implicit e32: ExprOpCoreF :<: EX, e34: ExprOp3_4F :<: EX)
       : IN ~> OptionFree[EX, ?]
 
-  def handleOps3_2[EX[_]: Functor](v: BsonVersion, trunc: Free[EX, ?] ~> Free[EX, ?])
-    (implicit e26: ExprOpCoreF :<: EX, e30: ExprOp3_0F :<: EX, e32: ExprOp3_2F :<: EX)
+  def handleOps3_4_4[EX[_]: Functor](v: BsonVersion)
+    (implicit e32: ExprOpCoreF :<: EX, e34: ExprOp3_4F :<: EX, e344: ExprOp3_4_4F :<: EX)
       : IN ~> OptionFree[EX, ?]
-
-  def handleOps3_4[EX[_]: Functor](v: BsonVersion, trunc: Free[EX, ?] ~> Free[EX, ?])
-    (implicit e26: ExprOpCoreF :<: EX, e30: ExprOp3_0F :<: EX, e32: ExprOp3_2F :<: EX, e34: ExprOp3_4F :<: EX)
-      : IN ~> OptionFree[EX, ?]
-
-  def trunc2_6[EX[_]: Functor](implicit inj: ExprOpCoreF :<: EX): Free[EX, ?] ~> Free[EX, ?] =
-    new (Free[EX, ?] ~> Free[EX, ?]) {
-      def apply[A](expr: Free[EX, A]): Free[EX, A] = {
-        val fp = new ExprOpCoreF.fixpoint[Free[EX, A], EX](Free.roll)
-        import fp._
-
-        $subtract(expr, $mod(expr, $literal(Bson.Int32(1))))
-      }
-    }
-
-  def trunc3_2[EX[_]: Functor](implicit inj: ExprOp3_2F :<: EX): Free[EX, ?] ~> Free[EX, ?] =
-    new (Free[EX, ?] ~> Free[EX, ?]) {
-      def apply[A](expr: Free[EX, A]): Free[EX, A] = {
-        val fp = new ExprOp3_2F.fixpoint[Free[EX, A], EX](Free.roll)
-        import fp._
-
-        $trunc(expr)
-      }
-    }
-
-  def handle2_6(v: BsonVersion)
-      : IN ~> OptionFree[Expr2_6, ?] =
-    λ[IN ~> OptionFree[Expr2_6, ?]]{f =>
-      val h = handleOpsCore[Expr2_6](v, trunc2_6)
-      h(f)
-    }
-
-  def handle3_0(v: BsonVersion)
-      : IN ~> OptionFree[Expr3_0, ?] =
-    λ[IN ~> OptionFree[Expr3_0, ?]]{f =>
-      val trunc = trunc2_6[Expr3_0]
-      val h30 = handleOps3_0[Expr3_0](v, trunc)
-      val h = handleOpsCore[Expr3_0](v, trunc)
-      h30(f) orElse h(f)
-    }
 
   def handle3_2(v: BsonVersion)
      : IN ~> OptionFree[Expr3_2, ?] =
     λ[IN ~> OptionFree[Expr3_2, ?]]{f =>
-      val trunc = trunc3_2[Expr3_2]
-      val h32 = handleOps3_2[Expr3_2](v, trunc)
-      val h30 = handleOps3_0[Expr3_2](v, trunc)
-      val h = handleOpsCore[Expr3_2](v, trunc)
-      h32(f) orElse h30(f) orElse h(f)
+      val h = handleOpsCore[Expr3_2](v)
+      h(f)
     }
 
-    def handle3_4(v: BsonVersion)
-       : IN ~> OptionFree[Expr3_4, ?] =
-      λ[IN ~> OptionFree[Expr3_4, ?]]{f =>
-        val trunc = trunc3_2[Expr3_4]
-        val h34 = handleOps3_4[Expr3_4](v, trunc)
-        val h32 = handleOps3_2[Expr3_4](v, trunc)
-        val h30 = handleOps3_0[Expr3_4](v, trunc)
-        val h = handleOpsCore[Expr3_4](v, trunc)
-        h34(f) orElse h32(f) orElse h30(f) orElse h(f)
-      }
+  def handle3_4(v: BsonVersion)
+     : IN ~> OptionFree[Expr3_4, ?] =
+    λ[IN ~> OptionFree[Expr3_4, ?]]{f =>
+      val h34 = handleOps3_4[Expr3_4](v)
+      val h = handleOpsCore[Expr3_4](v)
+      h34(f) orElse h(f)
+    }
+
+  def handle3_4_4(v: BsonVersion)
+     : IN ~> OptionFree[Expr3_4_4, ?] =
+    λ[IN ~> OptionFree[Expr3_4_4, ?]]{f =>
+      val h344 = handleOps3_4_4[Expr3_4_4](v)
+      val h34 = handleOps3_4[Expr3_4_4](v)
+      val h = handleOpsCore[Expr3_4_4](v)
+      h344(f) orElse h34(f) orElse h(f)
+    }
 }
 
 object FuncHandler {
@@ -111,8 +74,8 @@ object FuncHandler {
     new FuncHandler[MapFuncCore[T, ?]] {
 
       def handleOpsCore[EX[_]: Functor]
-        (v: BsonVersion, trunc: Free[EX, ?] ~> Free[EX, ?])
-        (implicit e26: ExprOpCoreF :<: EX)
+        (v: BsonVersion)
+        (implicit e32: ExprOpCoreF :<: EX)
           : MapFuncCore[T, ?] ~> OptionFree[EX, ?] =
         new (MapFuncCore[T, ?] ~> OptionFree[EX, ?]) {
 
@@ -122,6 +85,7 @@ object FuncHandler {
 
             val fp = new ExprOpCoreF.fixpoint[Free[EX, A], EX](Free.roll)
             import fp._
+            import FormatSpecifier._
 
             def partial(mfc: MapFuncCore[T, A]): OptionFree[EX, A] = mfc.some collect {
               case Undefined()           => $literal(Bson.Undefined)
@@ -152,7 +116,6 @@ object FuncHandler {
               case Gte(a1, a2)           => $gte(a1, a2)
 
               // FIXME: this is valid for strings only
-              case ConcatArrays(a1, a2)  => $concat(a1, a2)
 
               case Lower(a1)             => $toLower(a1)
               case Upper(a1)             => $toUpper(a1)
@@ -176,9 +139,9 @@ object FuncHandler {
                     $literal(Bson.Undefined)))
 
               case ExtractCentury(a1) =>
-                trunc($divide($add($year(a1), $literal(Bson.Int32(99))), $literal(Bson.Int32(100))))
+                $trunc($divide($add($year(a1), $literal(Bson.Int32(99))), $literal(Bson.Int32(100))))
               case ExtractDayOfMonth(a1) => $dayOfMonth(a1)
-              case ExtractDecade(a1) => trunc($divide($year(a1), $literal(Bson.Int32(10))))
+              case ExtractDecade(a1) => $trunc($divide($year(a1), $literal(Bson.Int32(10))))
               case ExtractDayOfWeek(a1) => $subtract($dayOfWeek(a1), $literal(Bson.Int32(1)))
               case ExtractDayOfYear(a1) => $dayOfYear(a1)
               case ExtractEpoch(a1) =>
@@ -198,7 +161,7 @@ object FuncHandler {
                     $millisecond(a1)),
                   $literal(Bson.Int32(1000)))
               case ExtractMillennium(a1) =>
-                trunc($divide($add($year(a1), $literal(Bson.Int32(999))), $literal(Bson.Int32(1000))))
+                $trunc($divide($add($year(a1), $literal(Bson.Int32(999))), $literal(Bson.Int32(1000))))
               case ExtractMilliseconds(a1) =>
                 $add(
                   $multiply($second(a1), $literal(Bson.Int32(1000))),
@@ -206,7 +169,7 @@ object FuncHandler {
               case ExtractMinute(a1) => $minute(a1)
               case ExtractMonth(a1) => $month(a1)
               case ExtractQuarter(a1) =>
-                trunc(
+                $trunc(
                   $add(
                     $divide(
                       $subtract($month(a1), $literal(Bson.Int32(1))),
@@ -221,7 +184,17 @@ object FuncHandler {
                $add($literal(Bson.Date(0)), a1)
 
               case Between(a1, a2, a3)   => $and($lte(a2, a1), $lte(a1, a3))
-              case TypeOf(a1) => mkTypeOf(a1, $lt(_, $literal(Bson.ObjectId(Check.minOid))))
+              case TimeOfDay(a1) =>
+                $dateToString(Hour :: ":" :: Minute :: ":" :: Second :: "." :: Millisecond :: FormatString.empty, a1)
+              case Power(a1, a2) => $pow(a1, a2)
+              case ProjectIndex(a1, a2) => $arrayElemAt(a1, a2)
+              case MakeArray(a1) => $arrayLit(List(a1))
+              case ConcatArrays(a1, a2) =>
+                $let(ListMap(DocVar.Name("a1") -> a1, DocVar.Name("a2") -> a2),
+                  $cond($and($isArray($field("$a1")), $isArray($field("$a2"))),
+                    $concatArrays(List($field("$a1"), $field("$a2"))),
+                    $concat($field("$a1"), $field("$a2"))))
+              case TypeOf(a1) => mkTypeOf(a1, $isArray)
             }
 
             partial(mfc) orElse (mfc match {
@@ -231,76 +204,42 @@ object FuncHandler {
           }
         }
 
-        def handleOps3_0[EX[_]: Functor](v: BsonVersion, trunc: Free[EX, ?] ~> Free[EX, ?])
-          (implicit e26: ExprOpCoreF :<: EX, e30: ExprOp3_0F :<: EX)
-            : MapFuncCore[T, ?] ~> OptionFree[EX, ?] =
-          new (MapFuncCore[T, ?] ~> OptionFree[EX, ?]){
-            implicit def hole[D](d: D): Free[EX, D] = Free.pure(d)
+      def handleOps3_4[EX[_]: Functor](v: BsonVersion)
+        (implicit e32: ExprOpCoreF :<: EX, e34: ExprOp3_4F :<: EX)
+          : MapFuncCore[T, ?] ~> OptionFree[EX, ?] =
+        new (MapFuncCore[T, ?] ~> OptionFree[EX, ?]){
+          implicit def hole[D](d: D): Free[EX, D] = Free.pure(d)
 
-            def apply[A](mfc: MapFuncCore[T, A]): OptionFree[EX, A] = {
-              val fp = new ExprOp3_0F.fixpoint[Free[EX, A], EX](Free.roll)
-              import fp._
-              import FormatSpecifier._
+          def apply[A](mfc: MapFuncCore[T, A]): OptionFree[EX, A] = {
+            val fp32  = new ExprOpCoreF.fixpoint[Free[EX, A], EX](Free.roll)
+            val fp34  = new ExprOp3_4F.fixpoint[Free[EX, A], EX](Free.roll)
 
-              mfc.some collect {
-               case TimeOfDay(a1) =>
-                 $dateToString(Hour :: ":" :: Minute :: ":" :: Second :: "." :: Millisecond :: FormatString.empty, a1)
-              }
+            import fp32._, fp34._
+
+            mfc.some collect {
+              case Split(a1, a2) => $split(a1, a2)
+              case Substring(a1, a2, a3) =>
+                $cond($or(
+                    $lt(a2, $literal(Bson.Int32(0))),
+                    $gt(a2, $strLenCP(a1))),
+                  $literal(Bson.Text("")),
+                  $cond(
+                    $lt(a3, $literal(Bson.Int32(0))),
+                    $substrCP(a1, a2, $strLenCP(a1)),
+                    $substrCP(a1, a2, a3)))
+              case Length(a1) => $strLenCP(a1)
             }
           }
+        }
 
-        def handleOps3_2[EX[_]: Functor](v: BsonVersion, trunc: Free[EX, ?] ~> Free[EX, ?])
-            (implicit e26: ExprOpCoreF :<: EX, e30: ExprOp3_0F :<: EX, e32: ExprOp3_2F :<: EX)
-            : MapFuncCore[T, ?] ~> OptionFree[EX, ?] =
-          new (MapFuncCore[T, ?] ~> OptionFree[EX, ?]){
-            implicit def hole[D](d: D): Free[EX, D] = Free.pure(d)
+      def handleOps3_4_4[EX[_]: Functor](v: BsonVersion)
+        (implicit e32: ExprOpCoreF :<: EX, e34: ExprOp3_4F :<: EX, e344: ExprOp3_4_4F :<: EX)
+          : MapFuncCore[T, ?] ~> OptionFree[EX, ?] =
+        new (MapFuncCore[T, ?] ~> OptionFree[EX, ?]){
 
-            def apply[A](mfc: MapFuncCore[T, A]): OptionFree[EX, A] = {
-              val fp32 = new ExprOp3_2F.fixpoint[Free[EX, A], EX](Free.roll)
-              val fp26 = new ExprOpCoreF.fixpoint[Free[EX, A], EX](Free.roll)
-              import fp32._, fp26._
+          def apply[A](mfc: MapFuncCore[T, A]): OptionFree[EX, A] = None
+        }
 
-              mfc.some collect {
-                case Power(a1, a2) => $pow(a1, a2)
-                case ProjectIndex(a1, a2) => $arrayElemAt(a1, a2)
-                case MakeArray(a1) => $arrayLit(List(a1))
-                case ConcatArrays(a1, a2) =>
-                  $let(ListMap(DocVar.Name("a1") -> a1, DocVar.Name("a2") -> a2),
-                    $cond($and($isArray($field("$a1")), $isArray($field("$a2"))),
-                      $concatArrays(List($field("$a1"), $field("$a2"))),
-                      $concat($field("$a1"), $field("$a2"))))
-                case TypeOf(a1) => mkTypeOf(a1, $isArray)
-              }
-            }
-          }
-
-        def handleOps3_4[EX[_]: Functor](v: BsonVersion, trunc: Free[EX, ?] ~> Free[EX, ?])
-          (implicit e26: ExprOpCoreF :<: EX, e30: ExprOp3_0F :<: EX, e32: ExprOp3_2F :<: EX, e34: ExprOp3_4F :<: EX)
-            : MapFuncCore[T, ?] ~> OptionFree[EX, ?] =
-          new (MapFuncCore[T, ?] ~> OptionFree[EX, ?]){
-            implicit def hole[D](d: D): Free[EX, D] = Free.pure(d)
-
-            def apply[A](mfc: MapFuncCore[T, A]): OptionFree[EX, A] = {
-              val fp26  = new ExprOpCoreF.fixpoint[Free[EX, A], EX](Free.roll)
-              val fp34  = new ExprOp3_4F.fixpoint[Free[EX, A], EX](Free.roll)
-
-              import fp26._, fp34._
-
-              mfc.some collect {
-                case Split(a1, a2) => $split(a1, a2)
-                case Substring(a1, a2, a3) =>
-                  $cond($or(
-                      $lt(a2, $literal(Bson.Int32(0))),
-                      $gt(a2, $strLenCP(a1))),
-                    $literal(Bson.Text("")),
-                    $cond(
-                      $lt(a3, $literal(Bson.Int32(0))),
-                      $substrCP(a1, a2, $strLenCP(a1)),
-                      $substrCP(a1, a2, a3)))
-                case Length(a1) => $strLenCP(a1)
-              }
-            }
-          }
     }
 
   def mapFuncDerived[T[_[_]]: CorecursiveT]
@@ -309,24 +248,14 @@ object FuncHandler {
       def emptyDerived[T[_[_]], F[_]]: MapFuncDerived[T, ?] ~> OptionFree[F, ?] =
          λ[MapFuncDerived[T, ?] ~> OptionFree[F, ?]] { _ => None }
 
-      def handleOpsCore[EX[_]: Functor](v: BsonVersion, trunc: Free[EX, ?] ~> Free[EX, ?])
-        (implicit e26: ExprOpCoreF :<: EX)
-          : MapFuncDerived[T, ?] ~> OptionFree[EX, ?] =
-        emptyDerived
-
-      def handleOps3_0[EX[_]: Functor](v: BsonVersion, trunc: Free[EX, ?] ~> Free[EX, ?])
-        (implicit e26: ExprOpCoreF :<: EX, e30: ExprOp3_0F :<: EX)
-          : MapFuncDerived[T, ?] ~> OptionFree[EX, ?] =
-        emptyDerived
-
-      def handleOps3_2[EX[_]: Functor](v: BsonVersion, trunc: Free[EX, ?] ~> Free[EX, ?])
-          (implicit e26: ExprOpCoreF :<: EX, e30: ExprOp3_0F :<: EX, e32: ExprOp3_2F :<: EX)
+      def handleOpsCore[EX[_]: Functor](v: BsonVersion)
+        (implicit e32: ExprOpCoreF :<: EX)
           : MapFuncDerived[T, ?] ~> OptionFree[EX, ?] =
         new (MapFuncDerived[T, ?] ~> OptionFree[EX, ?]){
           implicit def hole[D](d: D): Free[EX, D] = Free.pure(d)
 
           def apply[A](fa: MapFuncDerived[T, A]): OptionFree[EX, A] = {
-            val fp = new ExprOp3_2F.fixpoint[Free[EX, A], EX](Free.roll)
+            val fp = new ExprOpCoreF.fixpoint[Free[EX, A], EX](Free.roll)
             import fp._
 
             fa.some collect {
@@ -338,8 +267,13 @@ object FuncHandler {
           }
         }
 
-      def handleOps3_4[EX[_]: Functor](v: BsonVersion, trunc: Free[EX, ?] ~> Free[EX, ?])
-        (implicit e26: ExprOpCoreF :<: EX, e30: ExprOp3_0F :<: EX, e32: ExprOp3_2F :<: EX, e34: ExprOp3_4F :<: EX)
+      def handleOps3_4[EX[_]: Functor](v: BsonVersion)
+        (implicit e32: ExprOpCoreF :<: EX, e34: ExprOp3_4F :<: EX)
+          : MapFuncDerived[T, ?] ~> OptionFree[EX, ?] =
+        emptyDerived
+
+      def handleOps3_4_4[EX[_]: Functor](v: BsonVersion)
+        (implicit e32: ExprOpCoreF :<: EX, e34: ExprOp3_4F :<: EX, e344: ExprOp3_4_4F :<: EX)
           : MapFuncDerived[T, ?] ~> OptionFree[EX, ?] =
         emptyDerived
     }
@@ -362,50 +296,34 @@ object FuncHandler {
             }
           }
 
-      def handleOpsCore[EX[_]: Functor](v: BsonVersion, trunc: Free[EX, ?] ~> Free[EX, ?])
-        (implicit e26: ExprOpCoreF :<: EX)
+      def handleOpsCore[EX[_]: Functor](v: BsonVersion)
+        (implicit e32: ExprOpCoreF :<: EX)
           : MapFuncDerived[T, ?] ~> OptionFree[EX, ?] =
-        handleUnhandled(derived.handleOpsCore(v, trunc), core.handleOpsCore(v, trunc))
+        handleUnhandled(derived.handleOpsCore(v), core.handleOpsCore(v))
 
-      def handleOps3_0[EX[_]: Functor](v: BsonVersion, trunc: Free[EX, ?] ~> Free[EX, ?])
-        (implicit e26: ExprOpCoreF :<: EX, e30: ExprOp3_0F :<: EX)
+      def handleOps3_4[EX[_]: Functor](v: BsonVersion)
+        (implicit e32: ExprOpCoreF :<: EX, e34: ExprOp3_4F :<: EX)
           : MapFuncDerived[T, ?] ~> OptionFree[EX, ?] = {
 
         val hCore = λ[MapFuncCore[T, ?] ~> OptionFree[EX, ?]]{f =>
-          val h30 = core.handleOps3_0[EX](v, trunc)
-          val h = core.handleOpsCore[EX](v, trunc)
-          h30(f) orElse h(f)
+          val h34 = core.handleOps3_4[EX](v)
+          val h = core.handleOpsCore[EX](v)
+          h34(f) orElse h(f)
         }
-
-        handleUnhandled(derived.handleOps3_0(v, trunc), hCore)
+        handleUnhandled(derived.handleOps3_4(v), hCore)
       }
 
-      def handleOps3_2[EX[_]: Functor](v: BsonVersion, trunc: Free[EX, ?] ~> Free[EX, ?])
-        (implicit e26: ExprOpCoreF :<: EX, e30: ExprOp3_0F :<: EX, e32: ExprOp3_2F :<: EX)
+      def handleOps3_4_4[EX[_]: Functor](v: BsonVersion)
+        (implicit e32: ExprOpCoreF :<: EX, e34: ExprOp3_4F :<: EX, e344: ExprOp3_4_4F :<: EX)
           : MapFuncDerived[T, ?] ~> OptionFree[EX, ?] = {
 
         val hCore = λ[MapFuncCore[T, ?] ~> OptionFree[EX, ?]]{f =>
-          val h32 = core.handleOps3_2[EX](v, trunc)
-          val h30 = core.handleOps3_0[EX](v, trunc)
-          val h = core.handleOpsCore[EX](v, trunc)
-          h32(f) orElse h30(f) orElse h(f)
+          val h344 = core.handleOps3_4_4[EX](v)
+          val h34 = core.handleOps3_4[EX](v)
+          val h = core.handleOpsCore[EX](v)
+          h344(f) orElse h34(f) orElse h(f)
         }
-
-        handleUnhandled(derived.handleOps3_2(v, trunc), hCore)
-      }
-
-      def handleOps3_4[EX[_]: Functor](v: BsonVersion, trunc: Free[EX, ?] ~> Free[EX, ?])
-        (implicit e26: ExprOpCoreF :<: EX, e30: ExprOp3_0F :<: EX, e32: ExprOp3_2F :<: EX, e34: ExprOp3_4F :<: EX)
-          : MapFuncDerived[T, ?] ~> OptionFree[EX, ?] = {
-
-        val hCore = λ[MapFuncCore[T, ?] ~> OptionFree[EX, ?]]{f =>
-          val h34 = core.handleOps3_4[EX](v, trunc)
-          val h32 = core.handleOps3_2[EX](v, trunc)
-          val h30 = core.handleOps3_0[EX](v, trunc)
-          val h = core.handleOpsCore[EX](v, trunc)
-          h34(f) orElse h32(f) orElse h30(f) orElse h(f)
-        }
-        handleUnhandled(derived.handleOps3_4(v, trunc), hCore)
+        handleUnhandled(derived.handleOps3_4_4(v), hCore)
       }
     }
 
@@ -413,49 +331,38 @@ object FuncHandler {
       (implicit F: FuncHandler[F], G: FuncHandler[G])
       : FuncHandler[Coproduct[F, G, ?]] =
     new FuncHandler[Coproduct[F, G, ?]] {
-      def handleOpsCore[EX[_]: Functor](v: BsonVersion, trunc: Free[EX, ?] ~> Free[EX, ?])
-        (implicit e26: ExprOpCoreF :<: EX)
+      def handleOpsCore[EX[_]: Functor](v: BsonVersion)
+        (implicit e32: ExprOpCoreF :<: EX)
           : Coproduct[F, G, ?] ~> OptionFree[EX, ?] =
         λ[Coproduct[F, G, ?] ~> OptionFree[EX, ?]](_.run.fold(
-          F.handleOpsCore(v, trunc).apply _,
-          G.handleOpsCore(v, trunc).apply _
+          F.handleOpsCore[EX](v).apply _,
+          G.handleOpsCore[EX](v).apply _
         ))
 
-      def handleOps3_0[EX[_]: Functor](v: BsonVersion, trunc: Free[EX, ?] ~> Free[EX, ?])
-        (implicit e26: ExprOpCoreF :<: EX, e30: ExprOp3_0F :<: EX)
+      def handleOps3_4[EX[_]: Functor](v: BsonVersion)
+        (implicit e32: ExprOpCoreF :<: EX, e34: ExprOp3_4F :<: EX)
           : Coproduct[F, G, ?] ~> OptionFree[EX, ?] =
         λ[Coproduct[F, G, ?] ~> OptionFree[EX, ?]](_.run.fold(
-          F.handleOps3_0[EX](v, trunc).apply _,
-          G.handleOps3_0[EX](v, trunc).apply _
+          F.handleOps3_4[EX](v).apply _,
+          G.handleOps3_4[EX](v).apply _
         ))
 
-      def handleOps3_2[EX[_]: Functor](v: BsonVersion, trunc: Free[EX, ?] ~> Free[EX, ?])
-        (implicit e26: ExprOpCoreF :<: EX, e30: ExprOp3_0F :<: EX, e32: ExprOp3_2F :<: EX)
+      def handleOps3_4_4[EX[_]: Functor](v: BsonVersion)
+        (implicit e32: ExprOpCoreF :<: EX, e34: ExprOp3_4F :<: EX, e344: ExprOp3_4_4F :<: EX)
           : Coproduct[F, G, ?] ~> OptionFree[EX, ?] =
         λ[Coproduct[F, G, ?] ~> OptionFree[EX, ?]](_.run.fold(
-          F.handleOps3_2[EX](v, trunc).apply _,
-          G.handleOps3_2[EX](v, trunc).apply _
-        ))
-
-      def handleOps3_4[EX[_]: Functor](v: BsonVersion, trunc: Free[EX, ?] ~> Free[EX, ?])
-        (implicit e26: ExprOpCoreF :<: EX, e30: ExprOp3_0F :<: EX, e32: ExprOp3_2F :<: EX, e34: ExprOp3_4F :<: EX)
-          : Coproduct[F, G, ?] ~> OptionFree[EX, ?] =
-        λ[Coproduct[F, G, ?] ~> OptionFree[EX, ?]](_.run.fold(
-          F.handleOps3_4[EX](v, trunc).apply _,
-          G.handleOps3_4[EX](v, trunc).apply _
+          F.handleOps3_4_4[EX](v).apply _,
+          G.handleOps3_4_4[EX](v).apply _
         ))
 
     }
-
-  def handle2_6[F[_]: FuncHandler](v: BsonVersion): F ~> OptionFree[Expr2_6, ?] =
-    FuncHandler[F].handle2_6(v)
-
-  def handle3_0[F[_]: FuncHandler](v: BsonVersion): F ~> OptionFree[Expr3_0, ?] =
-    FuncHandler[F].handle3_0(v)
 
   def handle3_2[F[_]: FuncHandler](v: BsonVersion): F ~> OptionFree[Expr3_2, ?] =
     FuncHandler[F].handle3_2(v)
 
   def handle3_4[F[_]: FuncHandler](v: BsonVersion): F ~> OptionFree[Expr3_4, ?] =
     FuncHandler[F].handle3_4(v)
+
+  def handle3_4_4[F[_]: FuncHandler](v: BsonVersion): F ~> OptionFree[Expr3_4_4, ?] =
+    FuncHandler[F].handle3_4_4(v)
 }

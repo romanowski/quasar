@@ -20,8 +20,6 @@ import quasar.blueeyes._, json._
 
 import quasar.precog.TestSupport._
 import quasar.precog.common._
-import quasar.precog.common.accounts._
-import quasar.precog.common.security._
 
 import quasar.yggdrasil.bytecode._
 import quasar.yggdrasil.execution.EvaluationContext
@@ -46,7 +44,7 @@ trait EvaluatorTestSupport[M[+_]] extends StdLibEvaluatorStack[M]
 
   def Evaluator[N[+_]](N0: Monad[N])(implicit mn: M ~> N, nm: N ~> M) =
     new Evaluator[N](N0)(mn,nm) {
-      val report = new LoggingQueryLogger[N, instructions.Line] with ExceptionQueryLogger[N, instructions.Line] with TimingQueryLogger[N, instructions.Line] {
+      val report = new LoggingQueryLogger[N, Unit] with ExceptionQueryLogger[N, Unit] with TimingQueryLogger[N, Unit] {
         val M = N0
       }
       def freshIdScanner = outer.freshIdScanner
@@ -56,15 +54,13 @@ trait EvaluatorTestSupport[M[+_]] extends StdLibEvaluatorStack[M]
 
   def newGroupId = groupId.getAndIncrement
 
-  def testAccount = AccountDetails("00001", "test@email.com", dateTime.now, "testAPIKey", Path.Root, AccountPlan.Free)
-
-  val defaultEvaluationContext = EvaluationContext("testAPIKey", testAccount, Path.Root, Path.Root, dateTime.now)
+  val defaultEvaluationContext = EvaluationContext(Path.Root, Path.Root, dateTime.now)
 
   val projections = Map.empty[Path, Projection]
   def vfs = sys.error("VFS metadata not supported in test.")
 
   trait TableCompanion extends BaseBlockStoreTestTableCompanion {
-    override def load(table: Table, apiKey: APIKey, jtpe: JType) = EitherT {
+    override def load(table: Table, jtpe: JType) = EitherT {
       table.toJson map { events =>
         val eventsV = events.toStream.traverse[Validation[ResourceError, ?], Stream[JValue]] {
           case JString(pathStr) => Validation.success {

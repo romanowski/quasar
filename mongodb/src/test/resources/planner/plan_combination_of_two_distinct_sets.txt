@@ -3,7 +3,7 @@ Chain
 ├─ $SimpleMapF
 │  ├─ Map
 │  │  ╰─ JsCore(remove(_, "_id"))
-│  ╰─ Scope(Map())
+│  ╰─ Scope(ListMap())
 ├─ $GroupF
 │  ├─ Grouped
 │  ╰─ By
@@ -32,7 +32,9 @@ Chain
    │                         { "$literal": ISODate("-292275055-05-16T16:47:04.192Z") },
    │                         "$_id.0.bar"]
    │                     },
-   │                     { "$lt": ["$_id.0.bar", { "$literal": new RegExp("", "") }] }]
+   │                     {
+   │                       "$lt": ["$_id.0.bar", { "$literal": Timestamp(-2147483648, 0) }]
+   │                     }]
    │                 }]
    │             },
    │             { "$add": ["$_id.0.bar", "$_id.0.baz"] },

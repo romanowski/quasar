@@ -3,8 +3,6 @@
     "backends": {
         "couchbase":         "pending",
         "mimir":             "pending",
-        "mongodb_2_6":       "pending",
-        "mongodb_3_0":       "pending",
         "spark_cassandra":   "pending"
     },
     "data": "olympics.data",

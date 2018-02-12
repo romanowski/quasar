@@ -1,0 +1,29 @@
+{
+    "name": "[qa_s07] simple join",
+
+    "backends": {
+        "couchbase":         "timeout",
+        "marklogic_json":    "timeout",
+        "marklogic_xml":     "timeout",
+        "mongodb_3_2":       "ignoreFieldOrder",
+        "mongodb_3_4":       "ignoreFieldOrder",
+        "mongodb_read_only": "ignoreFieldOrder",
+        "mimir":             "ignoreFieldOrder",
+        "postgres":          "pending"
+    },
+
+    "data": ["leftData2.data", "rightData.data"],
+
+    "ignoredFields": ["_id"],
+
+    "query": "select * from leftData2 as l inner join rightData as r on l.a = r.a order by l.c, l.a",
+
+    "predicate": "exactly",
+    "ignoreResultOrder": true,
+    "expected": [
+       {"c": 2, "a": 1, "b": 10, "login": "mike" },
+       {"c": 2, "a": 1, "b": 20, "login": "john" },
+       {"c": 4, "a": 2, "b": 20, "login": "kate" },
+       {"c": 4, "a": 2, "b": 30, "login": "paul" }
+    ]
+}

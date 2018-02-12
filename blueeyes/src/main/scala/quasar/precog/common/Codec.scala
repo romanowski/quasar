@@ -20,6 +20,8 @@ import quasar.blueeyes._
 import quasar.precog._
 import quasar.precog.util.{BitSetUtil, ByteBufferMonad, ByteBufferPool, RawBitSet}
 
+import scalaz._
+
 import java.nio.{ByteBuffer, CharBuffer}
 import java.nio.charset.{CharsetEncoder, CoderResult}
 import java.math.{BigDecimal => BigDec}
@@ -27,9 +29,8 @@ import java.time.{LocalDateTime, ZonedDateTime}
 import java.time.format.DateTimeFormatter
 
 import scala.annotation.tailrec
+import scala.reflect.ClassTag
 import scala.specialized
-
-import scalaz._
 
 /**
   * Codecs allow a writer to deal with the case where we have a buffer overflow
@@ -157,7 +158,7 @@ object Codec {
 
   implicit def IndexedSeqCodec[A](implicit elemCodec: Codec[A]) = new IndexedSeqCodec(elemCodec)
 
-  implicit def arrayCodec[@specialized(Boolean, Long, Double) A: Codec: CTag]: Codec[Array[A]] = ArrayCodec(Codec[A])
+  implicit def arrayCodec[@specialized(Boolean, Long, Double) A: Codec: ClassTag]: Codec[Array[A]] = ArrayCodec(Codec[A])
 
   /**
     * A utility method for getting the encoded version of `a` as an array of
@@ -542,7 +543,7 @@ object Codec {
       }
     }
   }
-  case class ArrayCodec[@specialized(Boolean, Long, Double) A: CTag](elemCodec: Codec[A]) extends Codec[Array[A]] {
+  case class ArrayCodec[@specialized(Boolean, Long, Double) A: ClassTag](elemCodec: Codec[A]) extends Codec[Array[A]] {
     type S = Either[Array[A], (elemCodec.S, Array[A], Int)]
 
     override def minSize(as: Array[A]): Int = 5

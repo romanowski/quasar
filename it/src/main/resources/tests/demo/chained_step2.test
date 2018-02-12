@@ -1,0 +1,18 @@
+{
+    "name": "chained_step2",
+    "data": "patients.data",
+    "backends": {
+       "couchbase":         "ignoreFieldOrder",
+       "marklogic_json":    "ignoreFieldOrder",
+       "mimir":             "ignoreFieldOrder"
+    },
+    "query": "SELECT DISTINCT (city) FROM patients WHERE state = \"CO\" ORDER BY city ASC LIMIT 5",
+    "predicate": "exactly",
+    "expected": [
+      "ANTONITO",
+      "ARAPAHOE",
+      "ARBOLES" ,
+      "ARRIBA"  ,
+      "ARVADA"  
+    ]
+}

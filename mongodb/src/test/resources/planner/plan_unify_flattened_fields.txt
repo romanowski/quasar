@@ -15,32 +15,21 @@ Chain
 │  ╰─ ExcludeId
 ├─ $UnwindF(DocField(BsonField.Name("f")))
 ├─ $ProjectF
-│  ├─ Name("0" -> {
-│  │       "filter_source": {
-│  │         "$cond": [
-│  │           {
-│  │             "$and": [
-│  │               { "$lte": [{ "$literal": {  } }, "$s"] },
-│  │               { "$lt": ["$s", { "$literal": [] }] }]
-│  │           },
-│  │           "$s",
-│  │           { "$literal": undefined }]
-│  │       },
-│  │       "filter_predicate": { "$lt": ["$f", { "$literal": NumberInt("0") }] }
-│  │     })
+│  ├─ Name("filter_source" -> "$s")
+│  ├─ Name("filter_predicate" -> { "$lt": ["$f", { "$literal": NumberInt("0") }] })
 │  ╰─ ExcludeId
 ├─ $MatchF
 │  ╰─ Doc
-│     ╰─ Expr($0.filter_predicate -> Eq(Bool(true)))
+│     ╰─ Expr($filter_predicate -> Eq(Bool(true)))
 ├─ $ProjectF
 │  ├─ Name("0" -> {
 │  │       "$cond": [
 │  │         {
 │  │           "$and": [
-│  │             { "$lte": [{ "$literal": [] }, "$0.filter_source.loc"] },
-│  │             { "$lt": ["$0.filter_source.loc", { "$literal": BinData(0, "") }] }]
+│  │             { "$lte": [{ "$literal": [] }, "$filter_source.loc"] },
+│  │             { "$lt": ["$filter_source.loc", { "$literal": BinData(0, "") }] }]
 │  │         },
-│  │         "$0.filter_source.loc",
+│  │         "$filter_source.loc",
 │  │         [{ "$literal": undefined }]]
 │  │     })
 │  ╰─ ExcludeId

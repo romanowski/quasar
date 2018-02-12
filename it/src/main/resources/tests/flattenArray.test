@@ -1,8 +1,6 @@
 {
     "name": "flatten array",
     "backends": {
-        "mongodb_2_6": "pending",
-        "mongodb_3_0": "pending",
         "marklogic_xml":     "skip"
     },
     "data": "zips.data",

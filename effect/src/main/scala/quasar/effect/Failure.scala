@@ -106,8 +106,8 @@ object Failure {
   def attempt[S[_], E](implicit S: Failure[E, ?] :<: S): S ~> EitherT[Free[S, ?], E, ?] = new (S ~> EitherT[Free[S, ?], E, ?]) {
     def apply[A](sa: S[A]) =
       S.prj(sa) match {
-        case Some(Fail(err)) => EitherT.left(err.point[Free[S, ?]])
-        case None            => EitherT.right(Free.liftF(sa))
+        case Some(Fail(err)) => EitherT.leftT(err.point[Free[S, ?]])
+        case None            => EitherT.rightT(Free.liftF(sa))
       }
   }
 

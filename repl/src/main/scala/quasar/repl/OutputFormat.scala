@@ -26,12 +26,14 @@ object OutputFormat {
   case object Precise extends OutputFormat
   case object Readable extends OutputFormat
   case object Csv extends OutputFormat
+  case object Nothing extends OutputFormat
 
   def fromString(str: String): Option[OutputFormat] = str.toLowerCase match {
     case "table"    => Table.some
     case "precise"  => Precise.some
     case "readable" => Readable.some
     case "csv"      => Csv.some
+    case "nothing"  => Nothing.some
     case _          => none
   }
 }

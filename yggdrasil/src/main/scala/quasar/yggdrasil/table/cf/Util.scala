@@ -17,12 +17,12 @@
 package quasar.yggdrasil.table.cf
 
 import quasar.blueeyes._
-
 import quasar.precog._
 import quasar.precog.util.DateTimeUtil
-
 import quasar.yggdrasil._
 import quasar.yggdrasil.table._
+
+import scala.reflect.ClassTag
 
 object util {
 
@@ -96,7 +96,7 @@ object util {
   case object NConcat {
 
     // Closest thing we can get to casting an array. This is completely unsafe.
-    private def copyCastArray[A: CTag](as: Array[_]): Array[A] = {
+    private def copyCastArray[A: ClassTag](as: Array[_]): Array[A] = {
       var bs = new Array[A](as.length)
       System.arraycopy(as, 0, bs, 0, as.length)
       bs

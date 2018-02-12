@@ -172,7 +172,7 @@ class JavaScriptWorkflowExecutionSpec extends quasar.Qspec {
           ExcludeId))
 
       toJS(wf) must beRightDisjunction(
-        """db.zips.distinct("city").filter({ "pop": { "$gte": NumberLong("1000") } }).map(
+        """db.zips.distinct("city", { "pop": { "$gte": NumberLong("1000") } }).map(
           |  function (elem) { return { "c": elem } });
           |""".stripMargin)
     }

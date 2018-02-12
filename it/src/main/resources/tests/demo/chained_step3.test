@@ -1,0 +1,23 @@
+{
+    "name": "chained_step3",
+    "data": "patients.data",
+    "backends": {
+       "couchbase":         "ignoreFieldOrder",
+       "marklogic_json":    "ignoreFieldOrder",
+       "mimir":             "ignoreFieldOrder"
+    },
+    "query": "SELECT first_name, last_name, middle_name, age FROM patients WHERE state = \"CO\" AND city = \"DENVER\" ORDER BY last_name ASC LIMIT 10",
+    "predicate": "exactly",
+    "expected": [
+         { "first_name": "Lindsey" , "last_name": "Benjamin" , "middle_name":  "Alice"         , "age":  37 },
+         { "first_name": "Shayna"  , "last_name": "Brady"    , "middle_name":  "Beverly"       , "age":  26 },
+         { "first_name": "Dick"    , "last_name": "Brock"    , "middle_name":  "Edward"        , "age":  39 },
+         { "first_name": "Cornell" , "last_name": "Casey"    , "middle_name":  "Samuel"        , "age":  78 },
+         { "first_name": "Nola"    , "last_name": "Combs"    , "middle_name":  "Maryann"       , "age":  83 },
+         { "first_name": "Rosia"   , "last_name": "David"    , "middle_name":  "Vanessa"       , "age":  53 },
+         { "first_name": "Beatrice", "last_name": "Dawson"   , "middle_name":  "Judith"        , "age":  68 },
+         { "first_name": "Carlos"  , "last_name": "Dougherty", "middle_name":  "Stephen/Steven", "age":  37 },
+         { "first_name": "Willian" , "last_name": "Duran"    , "middle_name":  "Henry"         , "age":  26 },
+         { "first_name": "Bruno"   , "last_name": "Herrera"  , "middle_name":  "Jeffrey"       , "age":  38 }
+    ]
+}

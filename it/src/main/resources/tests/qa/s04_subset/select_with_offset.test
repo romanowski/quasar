@@ -1,0 +1,22 @@
+{
+    "name": "[qa_s04] select with offset",
+
+    "backends": {
+       "couchbase":         "ignoreFieldOrder",
+       "marklogic_json":    "ignoreFieldOrder",
+       "mimir":             "ignoreFieldOrder"
+    },
+
+    "data": "subset.data",
+
+    "query": "select a, b from subset order by a offset 3",
+
+    "predicate": "exactly",
+    
+    "expected": [
+       {"a": 4, "b": 3},
+       {"a": 5, "b": 4},
+       {"a": 6, "b": 5},
+       {"a": 7, "b": 6}
+    ]
+}

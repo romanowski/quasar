@@ -89,9 +89,8 @@ object JoinHandler {
       M: MonadError_[M, PlannerError],
       C: Classify[WF],
       ev0: WorkflowOpCoreF :<: WF,
-      ev1: WorkflowOp3_2F :<: WF,
-      ev2: RenderTree[WorkflowBuilder[WF]],
-      ev3: ExprOpOps.Uni[ExprOp])
+      ev1: RenderTree[WorkflowBuilder[WF]],
+      ev2: ExprOpOps.Uni[ExprOp])
     : JoinHandler[WF, OptionT[M, ?]] = JoinHandler({ (tpe, left, right) =>
 
     val WB = WorkflowBuilder.Ops[WF]

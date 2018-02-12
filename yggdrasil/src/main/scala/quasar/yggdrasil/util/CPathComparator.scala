@@ -18,13 +18,14 @@ package quasar.yggdrasil
 package util
 
 import quasar.blueeyes._
-import quasar.precog._
 import quasar.precog.common._
 import quasar.yggdrasil.table._
 
 import scalaz._, Scalaz._
 
 import java.time.ZonedDateTime
+
+import scala.reflect.ClassTag
 import scala.specialized
 
 /**
@@ -191,7 +192,7 @@ private[yggdrasil] trait ArrayCPathComparatorSupport {
 private[yggdrasil] final class HalfArrayCPathComparator[@specialized(Boolean, Long, Double) A, @specialized(Boolean, Long, Double) B](
     lPath: CPath,
     lCol: HomogeneousArrayColumn[_],
-    rCol: Int => B)(implicit ma: CTag[A], ho: HetOrder[A, B])
+    rCol: Int => B)(implicit ma: ClassTag[A], ho: HetOrder[A, B])
     extends CPathComparator
     with ArrayCPathComparatorSupport {
 
@@ -223,7 +224,7 @@ private[yggdrasil] final class ArrayCPathComparator[@specialized(Boolean, Long, 
     lPath: CPath,
     lCol: HomogeneousArrayColumn[_],
     rPath: CPath,
-    rCol: HomogeneousArrayColumn[_])(implicit ma: CTag[A], mb: CTag[B], ho: HetOrder[A, B])
+    rCol: HomogeneousArrayColumn[_])(implicit ma: ClassTag[A], mb: ClassTag[B], ho: HetOrder[A, B])
     extends CPathComparator
     with ArrayCPathComparatorSupport {
 
@@ -266,7 +267,7 @@ private[yggdrasil] final class ArrayCPathComparator[@specialized(Boolean, Long, 
   * ArraySelector provides a non-boxing way of accessing the leaf elements in a
   * bunch of nested arrays.
   */
-private[yggdrasil] final class ArraySelector[@specialized(Boolean, Long, Double) A](implicit m: CTag[A]) {
+private[yggdrasil] final class ArraySelector[@specialized(Boolean, Long, Double) A](implicit m: ClassTag[A]) {
   private val am = m.wrap
 
   def canPluck(a: Array[_], indices: Array[Int], mask: Array[Boolean]): Boolean = {

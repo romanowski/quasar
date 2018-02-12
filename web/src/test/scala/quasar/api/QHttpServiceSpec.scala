@@ -51,7 +51,7 @@ class QHttpServiceSpec extends quasar.Qspec {
     val f = new (Str ~> ResponseOr) {
       def apply[A](a: Str[A]) =
         if (errs.toSet contains a.s)
-          EitherT.left(BadRequest(a.s).putHeaders(errHost).withBody("FAIL"))
+          EitherT.leftT(BadRequest(a.s).putHeaders(errHost).withBody("FAIL"))
         else
           a.k(a.s).point[ResponseOr]
     }

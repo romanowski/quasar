@@ -662,7 +662,7 @@ class DataServiceSpec extends quasar.Qspec with FileSystemFixture with Http4s {
               accept(Csv("a,b\n1,\n,12:34:56"), expectedData)
             }
             "weird" >> {
-              val specialCsvMediaType = MessageFormat.Csv(CsvParser.Format('|', ''', '"', "\n"), None).mediaType
+              val specialCsvMediaType = MessageFormat.Csv(CsvParser.Format('|', '\'', '"', "\n"), None).mediaType
               val weirdData = List(
                 Data.Obj(ListMap("a" -> Data.Int(1))),
                 Data.Obj(ListMap("b" -> Data.Str("[1|2|3]"))))

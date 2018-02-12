@@ -73,7 +73,7 @@ object Cardinality {
             case _ => c
           }
         }.point[M]
-        case LeftShift(card, struct, id, repair) => (card * 10).point[M]
+        case LeftShift(card, struct, id, stpe, repair) => (card * 10).point[M]
         case Union(card, lBranch, rBranch) => {
           val compile = Cardinality[QScriptTotal[T, ?]].calculate(pathCard)
           (lBranch.cataM(interpretM(κ(card.point[M]), compile)) |@| rBranch.cataM(interpretM(κ(card.point[M]), compile))) { _ + _}

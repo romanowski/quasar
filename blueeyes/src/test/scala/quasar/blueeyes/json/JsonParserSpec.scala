@@ -28,6 +28,7 @@ import scala.util.Random.nextInt
 
 import java.net.URLDecoder
 import java.nio.ByteBuffer
+import java.nio.file.{Files, Paths}
 
 class JsonParserSpec extends Specification with ScalaCheck {
   import JParser._
@@ -94,7 +95,8 @@ object ParsingByteBufferSpec extends Specification {
 object AsyncParserSpec extends Specification {
   import AsyncParser._
 
-  private def loadBytes(path: String): Array[Byte] = jPath(path).slurpBytes
+  private def loadBytes(path: String): Array[Byte] =
+    Files.readAllBytes(Paths.get(path))
 
   private def chunk(data: Array[Byte], i: Int, j: Int) = {
     val len = min(j, data.length) - i

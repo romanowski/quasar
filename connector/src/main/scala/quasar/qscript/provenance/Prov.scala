@@ -18,7 +18,7 @@ package quasar.qscript.provenance
 
 import slamdata.Predef._
 import quasar.contrib.matryoshka.birecursiveIso
-import quasar.fp.ski.κ
+import quasar.fp.ski.{ι, κ}
 
 import matryoshka._
 import matryoshka.implicits._
@@ -71,20 +71,20 @@ trait Prov[D, I, P] {
     implicit val ignoreI: Equal[I] = Equal.equalBy(κ(()))
 
     def joinBoths(l0: P, r0: P): JoinKeys[I] =
-      JoinKeys(for {
+      JoinKeys((for {
         l <- flattenBoth(l0).join
         r <- flattenBoth(r0).join
         if l ≟ r
         k <- joinKeys(l, r).keys
-      } yield k)
+      } yield k).foldMap1Opt(ι).toIList)
 
     def joinOneOfs(l0: P, r0: P): JoinKeys[I] =
-      JoinKeys(for {
+      JoinKeys((for {
         l <- flattenOneOf(l0)
         r <- flattenOneOf(r0)
         if l ≟ r
         k <- joinKeys(l, r).keys
-      } yield k)
+      } yield k).foldMap1Opt(ι).toIList)
 
     def joinThens(l0: P, r0: P): JoinKeys[I] =
       JoinKeys(for {
@@ -101,14 +101,35 @@ trait Prov[D, I, P] {
       case (Value(l), Value(r)) => JoinKeys.singleton(l, r)
       case (Value(l), Proj(r))  => JoinKeys.singleton(l, dataId(r))
       case (Proj(l), Value(r))  => JoinKeys.singleton(dataId(l), r)
+      case (Then(_, _), _)      => joinThens(left, right)
+      case (_, Then(_, _))      => joinThens(left, right)
       case (Both(_, _), _)      => joinBoths(left, right)
       case (_, Both(_, _))      => joinBoths(left, right)
       case (OneOf(_, _), _)     => joinOneOfs(left, right)
       case (_, OneOf(_, _))     => joinOneOfs(left, right)
-      case (Then(_, _), _)      => joinThens(left, right)
-      case (_, Then(_, _))      => joinThens(left, right)
     }
   }
+
+  // eliminate duplicates within contiguous Both/OneOf and reassociate to the right
+  def normalize(p: P)(implicit eqD: Equal[D], eqI: Equal[I]): P = {
+    def normalize0(alternates: NEL[NEL[P]]): P =
+      alternates
+        .map(_.distinctE1.foldRight1(both(_, _)))
+        .distinctE1
+        .foldRight1(oneOf(_, _))
+
+    val normalizeƒ: Algebra[PF, NEL[NEL[P]]] = {
+      case Both(l, r)  => (l |@| r)(_ append _)
+      case OneOf(l, r) => l append r
+      case Then(l, r)  => NEL(NEL(thenn(normalize0(l), normalize0(r))))
+      case Value(i)    => NEL(NEL(value(i)))
+      case Proj(d)     => NEL(NEL(proj(d)))
+      case Nada()      => NEL(NEL(nada()))
+    }
+
+    normalize0(p.cata(normalizeƒ))
+  }
+
 
   // Instances
 
@@ -141,28 +162,11 @@ trait Prov[D, I, P] {
     })
   }
 
-  // eliminate duplicates within contiguous Both/OneOf and reassociate to the right
-  def normalize(p: P)(implicit eqD: Equal[D], eqI: Equal[I]): P = {
-    def normalize0(alternates: NEL[NEL[P]]): P =
-      alternates
-        .map(_.distinctE1.foldRight1(both(_, _)))
-        .distinctE1
-        .foldRight1(oneOf(_, _))
-
-    val normalizeƒ: Algebra[PF, NEL[NEL[P]]] = {
-      case Both(l, r)  => (l |@| r)(_ append _)
-      case OneOf(l, r) => l append r
-      case Then(l, r)  => NEL(NEL(thenn(normalize0(l), normalize0(r))))
-      case Value(i)    => NEL(NEL(value(i)))
-      case Proj(d)     => NEL(NEL(proj(d)))
-      case Nada()      => NEL(NEL(nada()))
-    }
-
-    normalize0(p.cata(normalizeƒ))
-  }
-
   ////
 
+  /** The disjunction of sets arising from distributing `OneOf` over trees
+    * of `Both`.
+    */
   private def flattenBoth(p: P): IList[IList[P]] =
     p.elgotPara(flattenBothƒ)
 
@@ -172,6 +176,7 @@ trait Prov[D, I, P] {
     case (other, _)       => IList(IList(other))
   }
 
+  /** The disjunction described by a tree of `OneOf`. */
   private def flattenOneOf(p: P): IList[P] =
     p.elgotPara(flattenOneOfƒ)
 
@@ -182,6 +187,9 @@ trait Prov[D, I, P] {
     case (other, _)       => IList(other)
   }
 
+  /** The disjunction of sequences arising from distributing `OneOf` over trees
+    * of `Then`.
+    */
   private def flattenThen(p: P): IList[IList[P]] =
     p.elgotPara(flattenThenƒ)
 

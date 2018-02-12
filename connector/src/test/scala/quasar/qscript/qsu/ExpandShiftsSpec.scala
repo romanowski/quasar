@@ -117,7 +117,13 @@ object ExpandShiftsSpec extends Qspec with QSUTTypes[Fix] with TreeMatchers {
               func.AccessLeftTarget(Access.id(IdAccess.identity[Fix[EJson]]('qsu0), _)),
               func.AccessLeftTarget(Access.id(IdAccess.identity[Fix[EJson]]('qsu1), _))),
             func.ConcatMaps(
-              func.AccessLeftTarget(Access.valueHole(_)),
+              func.ConcatMaps(
+                func.MakeMapS(
+                  "original",
+                  func.ProjectKeyS(func.AccessLeftTarget(Access.valueHole(_)), "original")),
+                func.MakeMapS(
+                  "0",
+                  func.ProjectKeyS(func.AccessLeftTarget(Access.valueHole(_)), "0"))),
               func.MakeMapS("1", func.RightTarget)),
             func.Undefined
           )
@@ -207,7 +213,13 @@ object ExpandShiftsSpec extends Qspec with QSUTTypes[Fix] with TreeMatchers {
               func.AccessLeftTarget(Access.id(IdAccess.identity[Fix[EJson]]('qsu0), _)),
               func.AccessLeftTarget(Access.id(IdAccess.identity[Fix[EJson]]('qsu1), _))),
             func.ConcatMaps(
-              func.AccessLeftTarget(Access.valueHole(_)),
+              func.ConcatMaps(
+                func.MakeMapS(
+                  "original",
+                  func.ProjectKeyS(func.AccessLeftTarget(Access.valueHole(_)), "original")),
+                func.MakeMapS(
+                  "0",
+                  func.ProjectKeyS(func.AccessLeftTarget(Access.valueHole(_)), "0"))),
               func.MakeMapS("1", func.RightTarget)),
             func.Undefined))
         outerRepair must beTreeEqual(
@@ -216,7 +228,17 @@ object ExpandShiftsSpec extends Qspec with QSUTTypes[Fix] with TreeMatchers {
               func.AccessLeftTarget(Access.id(IdAccess.identity[Fix[EJson]]('qsu1), _)),
               func.AccessLeftTarget(Access.id(IdAccess.identity[Fix[EJson]]('qsu2), _))),
             func.ConcatMaps(
-              func.AccessLeftTarget(Access.valueHole(_)),
+              func.ConcatMaps(
+                func.ConcatMaps(
+                  func.MakeMapS(
+                    "original",
+                    func.ProjectKeyS(func.AccessLeftTarget(Access.valueHole(_)), "original")),
+                  func.MakeMapS(
+                    "0",
+                    func.ProjectKeyS(func.AccessLeftTarget(Access.valueHole(_)), "0"))),
+                func.MakeMapS(
+                  "1",
+                  func.ProjectKeyS(func.AccessLeftTarget(Access.valueHole(_)), "1"))),
               func.MakeMapS("2", func.RightTarget)),
             func.Undefined
         ))

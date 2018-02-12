@@ -1,19 +1,5 @@
 version: '2'
 services:
-  quasar_mongodb_2_6:
-    container_name: quasar_mongodb_2_6
-    image: tutum/mongodb:2.6
-    command: mongod --smallfiles --noprealloc
-    ports:
-      - "27018:27017"
-
-  quasar_mongodb_3_0:
-    container_name: quasar_mongodb_3_0
-    image: mongo:3.0
-    command: mongod --smallfiles
-    ports:
-      - "27019:27017"
-
   quasar_mongodb_read_only:
     container_name: quasar_mongodb_read_only
     image: mongo:3.4
@@ -100,7 +86,7 @@ services:
         soft: -1
         hard: -1
     mem_limit: 1g
-  
+
   quasar_spark_cassandra:
     container_name: quasar_spark_cassandra
     image: cassandra:3
@@ -111,7 +97,7 @@ services:
       - 9042:9042
       - 9160:9160
       - 7000-7001:7000-7001
-  
+
   quasar_spark_ftp:
     container_name: quasar_spark_ftp
     image: stilliard/pure-ftpd:hardened
@@ -122,7 +108,7 @@ services:
       - PUBLICHOST=0.0.0.0
     volumes:
       - ./Dockerfiles/FTP:/etc/pure-ftpd/passwd
-  
+
   quasar_spark_hdfs:
     container_name: quasar_spark_hdfs
     image: slamdata/hadoop-singlenode-cluster:2.7.3

@@ -27,9 +27,8 @@ trait StringLibSpecs[M[+_]] extends EvaluatorSpecification[M]
   import instructions._
   import library._
 
-  private val line = Line(1, 1, "")
-  private def homStrings(line: Line) = dag.AbsoluteLoad(Const(CString("/hom/strings"))(line))(line)
-  private def hetStrings(line: Line) = dag.AbsoluteLoad(Const(CString("/het/strings"))(line))(line)
+  private def homStrings = dag.AbsoluteLoad(Const(CString("/hom/strings")))
+  private def hetStrings = dag.AbsoluteLoad(Const(CString("/het/strings")))
 
   def testEval(graph: DepGraph): Set[SEvent] = {
     consumeEval(graph, defaultEvaluationContext) match {
@@ -38,12 +37,12 @@ trait StringLibSpecs[M[+_]] extends EvaluatorSpecification[M]
     }
   }
 
-  def op1Input(op: Op1, loadFrom: Line => dag.AbsoluteLoad) = {
-    dag.Operate(BuiltInFunction1Op(op), loadFrom(line))(line)
+  def op1Input(op: Op1, loadFrom: dag.AbsoluteLoad) = {
+    dag.Operate(BuiltInFunction1Op(op), loadFrom)
   }
 
-  def op2Input(op: Op2, const: RValue, loadFrom: Line => dag.AbsoluteLoad) = {
-    Join(BuiltInFunction2Op(op), Cross(None), loadFrom(line), Const(const)(line))(line)
+  def op2Input(op: Op2, const: RValue, loadFrom: dag.AbsoluteLoad) = {
+    Join(BuiltInFunction2Op(op), Cross(None), loadFrom, Const(const))
   }
 
   "for homogeneous sets, the appropriate string function" should {
@@ -332,8 +331,8 @@ trait StringLibSpecs[M[+_]] extends EvaluatorSpecification[M]
     }
     "determine compareIgnoreCase" in {
       val input = Join(BuiltInFunction2Op(compareIgnoreCase), Cross(None),
-        dag.AbsoluteLoad(Const(CString("/hom/strings"))(line))(line),
-        Const(CString("QUIRKY"))(line))(line)
+        dag.AbsoluteLoad(Const(CString("/hom/strings"))),
+        Const(CString("QUIRKY")))
 
       val result = testEval(input)
 
@@ -347,8 +346,8 @@ trait StringLibSpecs[M[+_]] extends EvaluatorSpecification[M]
     }
     "determine equals" in {
       val input = Join(BuiltInFunction2Op(library.equals), Cross(None),
-        dag.AbsoluteLoad(Const(CString("/hom/strings"))(line))(line),
-        Const(CString("quirky"))(line))(line)
+        dag.AbsoluteLoad(Const(CString("/hom/strings"))),
+        Const(CString("quirky")))
 
       val result = testEval(input)
 
@@ -362,8 +361,8 @@ trait StringLibSpecs[M[+_]] extends EvaluatorSpecification[M]
     }
     "determine indexOf" in {
       val input = Join(BuiltInFunction2Op(indexOf), Cross(None),
-        dag.AbsoluteLoad(Const(CString("/hom/strings"))(line))(line),
-        Const(CString("e"))(line))(line)
+        dag.AbsoluteLoad(Const(CString("/hom/strings"))),
+        Const(CString("e")))
 
       val result = testEval(input)
 
@@ -377,8 +376,8 @@ trait StringLibSpecs[M[+_]] extends EvaluatorSpecification[M]
     }
     "determine equalsIgnoreCase" in {
       val input = Join(BuiltInFunction2Op(equalsIgnoreCase), Cross(None),
-        dag.AbsoluteLoad(Const(CString("/hom/strings"))(line))(line),
-        Const(CString("QUIRKY"))(line))(line)
+        dag.AbsoluteLoad(Const(CString("/hom/strings"))),
+        Const(CString("QUIRKY")))
 
       val result = testEval(input)
 
@@ -395,7 +394,7 @@ trait StringLibSpecs[M[+_]] extends EvaluatorSpecification[M]
   "for heterogeneous sets, the appropriate string function" should {
     "determine length" in {
       val input = dag.Operate(BuiltInFunction1Op(library.length),
-        dag.AbsoluteLoad(Const(CString("/het/strings"))(line))(line))(line)
+        dag.AbsoluteLoad(Const(CString("/het/strings"))))
 
       val result = testEval(input)
 
@@ -409,7 +408,7 @@ trait StringLibSpecs[M[+_]] extends EvaluatorSpecification[M]
     }
     "determine trim" in {
       val input = dag.Operate(BuiltInFunction1Op(trim),
-        dag.AbsoluteLoad(Const(CString("/het/strings"))(line))(line))(line)
+        dag.AbsoluteLoad(Const(CString("/het/strings"))))
 
       val result = testEval(input)
 
@@ -423,7 +422,7 @@ trait StringLibSpecs[M[+_]] extends EvaluatorSpecification[M]
     }
     "determine toUpperCase" in {
       val input = dag.Operate(BuiltInFunction1Op(toUpperCase),
-        dag.AbsoluteLoad(Const(CString("/het/strings"))(line))(line))(line)
+        dag.AbsoluteLoad(Const(CString("/het/strings"))))
 
       val result = testEval(input)
 
@@ -437,7 +436,7 @@ trait StringLibSpecs[M[+_]] extends EvaluatorSpecification[M]
     }
     "determine toLowerCase" in {
       val input = dag.Operate(BuiltInFunction1Op(toLowerCase),
-        dag.AbsoluteLoad(Const(CString("/het/strings"))(line))(line))(line)
+        dag.AbsoluteLoad(Const(CString("/het/strings"))))
 
       val result = testEval(input)
 
@@ -451,7 +450,7 @@ trait StringLibSpecs[M[+_]] extends EvaluatorSpecification[M]
     }
     "determine isEmpty" in {
       val input = dag.Operate(BuiltInFunction1Op(isEmpty),
-        dag.AbsoluteLoad(Const(CString("/het/strings"))(line))(line))(line)
+        dag.AbsoluteLoad(Const(CString("/het/strings"))))
 
       val result = testEval(input)
 
@@ -465,7 +464,7 @@ trait StringLibSpecs[M[+_]] extends EvaluatorSpecification[M]
     }
     "determine intern" in {
       val input = dag.Operate(BuiltInFunction1Op(intern),
-        dag.AbsoluteLoad(Const(CString("/het/strings"))(line))(line))(line)
+        dag.AbsoluteLoad(Const(CString("/het/strings"))))
 
       val result = testEval(input)
 
@@ -480,8 +479,8 @@ trait StringLibSpecs[M[+_]] extends EvaluatorSpecification[M]
 
     "determine codePointAt with valid integer" in {
       val input = Join(BuiltInFunction2Op(codePointAt), Cross(None),
-        dag.AbsoluteLoad(Const(CString("/het/strings"))(line))(line),
-        Const(CLong(7))(line))(line)
+        dag.AbsoluteLoad(Const(CString("/het/strings"))),
+        Const(CLong(7)))
 
       val result = testEval(input)
 
@@ -495,8 +494,8 @@ trait StringLibSpecs[M[+_]] extends EvaluatorSpecification[M]
     }
     "determine codePointAt with invalid integer" in {
       val input = Join(BuiltInFunction2Op(codePointAt), Cross(None),
-        dag.AbsoluteLoad(Const(CString("/het/strings"))(line))(line),
-        Const(CNum(7.5))(line))(line)
+        dag.AbsoluteLoad(Const(CString("/het/strings"))),
+        Const(CNum(7.5)))
 
       val result = testEval(input)
 
@@ -510,8 +509,8 @@ trait StringLibSpecs[M[+_]] extends EvaluatorSpecification[M]
     }
     "determine startsWith" in {
       val input = Join(BuiltInFunction2Op(startsWith), Cross(None),
-        dag.AbsoluteLoad(Const(CString("/het/strings"))(line))(line),
-        Const(CString("s"))(line))(line)
+        dag.AbsoluteLoad(Const(CString("/het/strings"))),
+        Const(CString("s")))
 
       val result = testEval(input)
 
@@ -525,8 +524,8 @@ trait StringLibSpecs[M[+_]] extends EvaluatorSpecification[M]
     }
     "determine lastIndexOf" in {
       val input = Join(BuiltInFunction2Op(lastIndexOf), Cross(None),
-        dag.AbsoluteLoad(Const(CString("/het/strings"))(line))(line),
-        Const(CString("s"))(line))(line)
+        dag.AbsoluteLoad(Const(CString("/het/strings"))),
+        Const(CString("s")))
 
       val result = testEval(input)
 
@@ -540,8 +539,8 @@ trait StringLibSpecs[M[+_]] extends EvaluatorSpecification[M]
     }
     "determine concat" in {
       val input = Join(BuiltInFunction2Op(concat), Cross(None),
-        dag.AbsoluteLoad(Const(CString("/het/strings"))(line))(line),
-        Const(CString("7"))(line))(line)
+        dag.AbsoluteLoad(Const(CString("/het/strings"))),
+        Const(CString("7")))
 
       val result = testEval(input)
 
@@ -555,8 +554,8 @@ trait StringLibSpecs[M[+_]] extends EvaluatorSpecification[M]
     }
     "determine endsWith" in {
       val input = Join(BuiltInFunction2Op(endsWith), Cross(None),
-        dag.AbsoluteLoad(Const(CString("/het/strings"))(line))(line),
-        Const(CString("y"))(line))(line)
+        dag.AbsoluteLoad(Const(CString("/het/strings"))),
+        Const(CString("y")))
 
       val result = testEval(input)
 
@@ -570,8 +569,8 @@ trait StringLibSpecs[M[+_]] extends EvaluatorSpecification[M]
     }
     "determine codePointBefore with valid integer" in {
       val input = Join(BuiltInFunction2Op(codePointBefore), Cross(None),
-        dag.AbsoluteLoad(Const(CString("/het/strings"))(line))(line),
-        Const(CLong(7))(line))(line)
+        dag.AbsoluteLoad(Const(CString("/het/strings"))),
+        Const(CLong(7)))
 
       val result = testEval(input)
 
@@ -585,8 +584,8 @@ trait StringLibSpecs[M[+_]] extends EvaluatorSpecification[M]
     }
     "determine codePointBefore with invalid integer" in {
       val input = Join(BuiltInFunction2Op(codePointBefore), Cross(None),
-        dag.AbsoluteLoad(Const(CString("/het/strings"))(line))(line),
-        Const(CNum(7.5))(line))(line)
+        dag.AbsoluteLoad(Const(CString("/het/strings"))),
+        Const(CNum(7.5)))
 
       val result = testEval(input)
 
@@ -600,8 +599,8 @@ trait StringLibSpecs[M[+_]] extends EvaluatorSpecification[M]
     }
     "determine takeLeft with valid integer" in {
       val input = Join(BuiltInFunction2Op(takeLeft), Cross(None),
-        dag.AbsoluteLoad(Const(CString("/het/strings"))(line))(line),
-        Const(CLong(8))(line))(line)
+        dag.AbsoluteLoad(Const(CString("/het/strings"))),
+        Const(CLong(8)))
 
       val result = testEval(input)
 
@@ -614,8 +613,8 @@ trait StringLibSpecs[M[+_]] extends EvaluatorSpecification[M]
     }
     "determine takeRight with valid integer" in {
       val input = Join(BuiltInFunction2Op(takeRight), Cross(None),
-        dag.AbsoluteLoad(Const(CString("/het/strings"))(line))(line),
-        Const(CLong(8))(line))(line)
+        dag.AbsoluteLoad(Const(CString("/het/strings"))),
+        Const(CLong(8)))
 
       val result = testEval(input)
 
@@ -628,8 +627,8 @@ trait StringLibSpecs[M[+_]] extends EvaluatorSpecification[M]
     }
     "determine dropLeft with valid integer" in {
       val input = Join(BuiltInFunction2Op(dropLeft), Cross(None),
-        dag.AbsoluteLoad(Const(CString("/het/strings"))(line))(line),
-        Const(CLong(8))(line))(line)
+        dag.AbsoluteLoad(Const(CString("/het/strings"))),
+        Const(CLong(8)))
 
       val result = testEval(input)
 
@@ -642,8 +641,8 @@ trait StringLibSpecs[M[+_]] extends EvaluatorSpecification[M]
     }
     "determine dropRight with valid integer" in {
       val input = Join(BuiltInFunction2Op(dropRight), Cross(None),
-        dag.AbsoluteLoad(Const(CString("/het/strings"))(line))(line),
-        Const(CLong(8))(line))(line)
+        dag.AbsoluteLoad(Const(CString("/het/strings"))),
+        Const(CLong(8)))
 
       val result = testEval(input)
 
@@ -720,8 +719,8 @@ trait StringLibSpecs[M[+_]] extends EvaluatorSpecification[M]
     }
     "determine indexOf" in {
       val input = Join(BuiltInFunction2Op(indexOf), Cross(None),
-        dag.AbsoluteLoad(Const(CString("/het/strings"))(line))(line),
-        Const(CString("e"))(line))(line)
+        dag.AbsoluteLoad(Const(CString("/het/strings"))),
+        Const(CString("e")))
 
       val result = testEval(input)
 
@@ -735,8 +734,8 @@ trait StringLibSpecs[M[+_]] extends EvaluatorSpecification[M]
     }
     "determine equalsIgnoreCase" in {
       val input = Join(BuiltInFunction2Op(equalsIgnoreCase), Cross(None),
-        dag.AbsoluteLoad(Const(CString("/het/strings"))(line))(line),
-        Const(CString("QUIRKY"))(line))(line)
+        dag.AbsoluteLoad(Const(CString("/het/strings"))),
+        Const(CString("QUIRKY")))
 
       val result = testEval(input)
 
@@ -753,7 +752,7 @@ trait StringLibSpecs[M[+_]] extends EvaluatorSpecification[M]
   "parseNum" should {
     "handle valid and invalid inputs" in {
       val input = dag.Operate(BuiltInFunction1Op(parseNum),
-        dag.AbsoluteLoad(Const(CString("/het/stringNums"))(line))(line))(line)
+        dag.AbsoluteLoad(Const(CString("/het/stringNums"))))
 
       val result = testEval(input)
 
@@ -779,7 +778,7 @@ trait StringLibSpecs[M[+_]] extends EvaluatorSpecification[M]
   "toString" should {
     "convert values to strings" in {
       val input = dag.Operate(BuiltInFunction1Op(numToString),
-        dag.AbsoluteLoad(Const(CString("/het/random"))(line))(line))(line)
+        dag.AbsoluteLoad(Const(CString("/het/random"))))
 
       val result = testEval(input)
 
@@ -802,7 +801,7 @@ trait StringLibSpecs[M[+_]] extends EvaluatorSpecification[M]
     "trim the trailing '.0' in round double conversion" in {
       val input = dag.Operate(BuiltInFunction1Op(numToString),
         dag.Operate(BuiltInFunction1Op(round),
-          Const(CDouble(3.14))(line))(line))(line)
+          Const(CDouble(3.14))))
 
       val resultE = testEval(input)
       resultE must haveSize(1)
@@ -826,8 +825,8 @@ trait StringLibSpecs[M[+_]] extends EvaluatorSpecification[M]
 
     def mktree(f: Op2, path: String, sep: String) =
       Join(BuiltInFunction2Op(f), Cross(None),
-        dag.AbsoluteLoad(Const(CString(path))(line))(line),
-        Const(CString(sep))(line))(line)
+        dag.AbsoluteLoad(Const(CString(path))),
+        Const(CString(sep)))
 
     def tester(f: Op2, path: String, sep: String) =
       mogrify(testEval(mktree(f, path, sep)))
@@ -848,8 +847,8 @@ trait StringLibSpecs[M[+_]] extends EvaluatorSpecification[M]
 
     "quote a regular expression in a split" in {
       val input = Join(BuiltInFunction2Op(split), Cross(None),
-        Const(CString("foo{bar"))(line),
-        Const(CString("{"))(line))(line)
+        Const(CString("foo{bar")),
+        Const(CString("{")))
 
       testEval(input) collect {
         case (_, SArray(vec)) => vec collect { case SString(str) => str }

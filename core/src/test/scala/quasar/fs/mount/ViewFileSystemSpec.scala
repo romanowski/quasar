@@ -174,13 +174,13 @@ class ViewFileSystemSpec extends quasar.Qspec with TreeMatchers {
       val f = (for {
         h <- read.unsafe.open(p, 0L, None)
         _ <- read.unsafe.read(h)
-        _ <- EitherT.right(read.unsafe.close(h))
+        _ <- EitherT.rightT(read.unsafe.close(h))
       } yield ()).run
 
       val exp = (for {
         h   <- query.unsafe.eval(lp)
         _   <- query.transforms.fsErrToExec(query.unsafe.more(h))
-        _   <- query.transforms.fsErrToExec(EitherT.right(query.unsafe.close(h)))
+        _   <- query.transforms.fsErrToExec(EitherT.rightT(query.unsafe.close(h)))
       } yield ()).run.run
 
       viewInterpTrace(views, Map(), f).renderedTrees must beTree(traceInterp(exp, Map())._1)
@@ -195,7 +195,7 @@ class ViewFileSystemSpec extends quasar.Qspec with TreeMatchers {
       val f = (for {
         h <- read.unsafe.open(p, 5L, Some(10L))
         _ <- read.unsafe.read(h)
-        _ <- EitherT.right(read.unsafe.close(h))
+        _ <- EitherT.rightT(read.unsafe.close(h))
       } yield ()).run
 
       val expQ =
@@ -209,7 +209,7 @@ class ViewFileSystemSpec extends quasar.Qspec with TreeMatchers {
         _   <- query.transforms.fsErrToExec(
                 query.unsafe.more(h))
         _   <- query.transforms.fsErrToExec(
-                EitherT.right(query.unsafe.close(h)))
+                EitherT.rightT(query.unsafe.close(h)))
       } yield ()).run.run
 
       viewInterpTrace(views, Map(), f).renderedTrees must beTree(traceInterp(exp, Map())._1)
@@ -226,7 +226,7 @@ class ViewFileSystemSpec extends quasar.Qspec with TreeMatchers {
       val f = (for {
         h <- read.unsafe.open(p1, 0L, None)
         _ <- read.unsafe.read(h)
-        _ <- EitherT.right(read.unsafe.close(h))
+        _ <- EitherT.rightT(read.unsafe.close(h))
       } yield ()).run
 
       val expQ = Fix(Squash(lpf.read(rootDir </> file("zips"))))
@@ -235,7 +235,7 @@ class ViewFileSystemSpec extends quasar.Qspec with TreeMatchers {
         _   <- query.transforms.fsErrToExec(
                 query.unsafe.more(h))
         _   <- query.transforms.fsErrToExec(
-                EitherT.right(query.unsafe.close(h)))
+                EitherT.rightT(query.unsafe.close(h)))
       } yield ()).run.run
 
       viewInterpTrace(views, Map(), f).renderedTrees must beTree(traceInterp(exp, Map())._1)
@@ -249,7 +249,7 @@ class ViewFileSystemSpec extends quasar.Qspec with TreeMatchers {
 
       val f = (for {
         h <- read.unsafe.open(p, 0L, None)
-        _ <- EitherT.right(read.unsafe.close(h))
+        _ <- EitherT.rightT(read.unsafe.close(h))
         _ <- read.unsafe.read(h)
       } yield ()).run
 
@@ -264,8 +264,8 @@ class ViewFileSystemSpec extends quasar.Qspec with TreeMatchers {
 
       val f = (for {
         h <- read.unsafe.open(p, 0L, None)
-        _ <- EitherT.right(read.unsafe.close(h))
-        _ <- EitherT.right(read.unsafe.close(h))
+        _ <- EitherT.rightT(read.unsafe.close(h))
+        _ <- EitherT.rightT(read.unsafe.close(h))
       } yield ()).run
 
       viewInterpTrace(views, Map(), f).result must_=== \/.right(\/.right(()))

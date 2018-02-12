@@ -1,0 +1,16 @@
+{
+  "name": "[qa_s06] simple union",
+
+  "backends": {
+  },
+
+  "data": ["simple_union.data", "simple_union2.data"],
+
+  "query": "select * from (select * from simple_union union select * from simple_union2) order by b",
+
+  "predicate": "exactly",
+
+  "expected": [{"a": "1", "b": 1},
+               {"a": "2", "b": 2},
+               {"a": "3", "b": 3}]
+}

@@ -25,62 +25,6 @@ trait Instructions {
 class InstructionSet[Lib <: Library](val library: Lib) {
   import library._
 
-  sealed trait Instruction
-
-  object RootInstr {
-    def unapply(in: Instruction): Boolean = in match {
-      case _: PushString => true
-      case _: PushNum    => true
-      case PushTrue      => true
-      case PushFalse     => true
-      case PushNull      => true
-      case PushObject    => true
-      case PushArray     => true
-      case _             => false
-    }
-  }
-
-  sealed trait JoinInstr                          extends Instruction
-  final case class Map2Cross(op: BinaryOperation) extends JoinInstr
-  final case class Map2Match(op: BinaryOperation) extends JoinInstr
-  final case object Assert                        extends JoinInstr
-  final case object IIntersect                    extends JoinInstr
-  final case object IUnion                        extends JoinInstr
-  final case object Observe                       extends JoinInstr
-  final case object SetDifference                 extends JoinInstr
-
-  sealed trait DataInstr                                   extends Instruction
-  final case class Line(line: Int, col: Int, text: String) extends DataInstr { override def toString = s"<$line:$col>" }
-  final case class PushNum(num: String)                    extends DataInstr
-  final case class PushString(str: String)                 extends DataInstr
-  final case class Swap(depth: Int)                        extends DataInstr
-  final case object FilterCross                            extends DataInstr
-  final case object FilterMatch                            extends DataInstr
-
-  final case class Group(id: Int)                extends Instruction
-  final case class KeyPart(id: Int)              extends Instruction
-  final case class Map1(op: UnaryOperation)      extends Instruction
-  final case class MergeBuckets(and: Boolean)    extends Instruction
-  final case class Morph1(m1: BuiltInMorphism1)  extends Instruction
-  final case class Morph2(m2: BuiltInMorphism2)  extends Instruction
-  final case class PushGroup(id: Int)            extends Instruction
-  final case class PushKey(id: Int)              extends Instruction
-  final case class Reduce(red: BuiltInReduction) extends Instruction
-  final case object AbsoluteLoad                 extends Instruction
-  final case object Distinct                     extends Instruction
-  final case object Drop                         extends Instruction
-  final case object Dup                          extends Instruction
-  final case object Extra                        extends Instruction
-  final case object Merge                        extends Instruction
-  final case object PushArray                    extends Instruction
-  final case object PushFalse                    extends Instruction
-  final case object PushNull                     extends Instruction
-  final case object PushObject                   extends Instruction
-  final case object PushTrue                     extends Instruction
-  final case object PushUndefined                extends Instruction
-  final case object RelativeLoad                 extends Instruction
-  final case object Split                        extends Instruction
-
   private def DateNumUnion         = JUnionT(JNumberT, JDateT)
   private def BinOpType(tp: JType) = BinaryOperationType(tp, tp, tp)
   import JType.JUniverseT

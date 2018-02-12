@@ -16,8 +16,6 @@
 
 package quasar.precog.common.jobs
 
-import quasar.precog.common.security._
-
 import quasar.blueeyes.json._
 import quasar.blueeyes.json.serialization.{ Decomposer, Extractor }
 import quasar.blueeyes.json.serialization.DefaultSerialization._
@@ -27,9 +25,9 @@ import shapeless._
 
 import scalaz.syntax.std.boolean._
 
-case class Job(id: JobId, apiKey: APIKey, name: String, jobType: String, data: Option[JValue], state: JobState)
+case class Job(id: JobId, name: String, jobType: String, data: Option[JValue], state: JobState)
 object Job {
-  val schemaV1 = "id" :: "apiKey" :: "name" :: "type" :: "data" :: "state" :: HNil
+  val schemaV1 = "id" :: "name" :: "type" :: "data" :: "state" :: HNil
   implicit val decomposerV1: Decomposer[Job] = decomposerV[Job](schemaV1, Some("1.0".v))
   implicit val extractorV1: Extractor[Job] = extractorV[Job](schemaV1, Some("1.0".v))
 }

@@ -8,7 +8,7 @@ import sbt._
 object Dependencies {
   private val algebraVersion      = "0.7.0"
   private val argonautVersion     = "6.2"
-  private val disciplineVersion   = "0.5"
+  private val disciplineVersion   = "0.7.2"
   private val doobieVersion       = "0.4.4"
   private val jawnVersion         = "0.10.4"
   private val jacksonVersion      = "2.4.4"
@@ -18,15 +18,15 @@ object Dependencies {
   private val raptureVersion      = "2.0.0-M9"
   private val refinedVersion      = "0.8.3"
   private val scodecBitsVersion   = "1.1.2"
-  private val http4sVersion       = "0.16.5a"
+  private val http4sVersion       = "0.16.6a"
   private val scalacheckVersion   = "1.13.4"
-  private val scalazVersion       = "7.2.15"
+  private val scalazVersion       = "7.2.17"
   private val scalazStreamVersion = "0.8.6a"
   private val shapelessVersion    = "2.3.2"
   private val simulacrumVersion   = "0.10.0"
   // For unknown reason sbt-slamdata's specsVersion, 3.8.7,
   // leads to a ParquetRDDE failure under a full test run
-  private val specsVersion        = "3.8.4"
+  private val specsVersion        = "4.0.2"
   private val spireVersion        = "0.14.1"
 
   def foundation = Seq(
@@ -51,9 +51,10 @@ object Dependencies {
     "org.typelevel"              %% "discipline"                % disciplineVersion                    % Test,
     "org.typelevel"              %% "spire-laws"                % spireVersion                         % Test,
     "org.specs2"                 %% "specs2-core"               % specsVersion                         % Test,
+    "org.specs2"                 %% "specs2-scalacheck"         % specsVersion                         % Test,
     "org.scalaz"                 %% "scalaz-scalacheck-binding" % (scalazVersion + "-scalacheck-1.13") % Test,
-    "org.typelevel"              %% "shapeless-scalacheck"      % "0.6"                                % Test,
-    "org.typelevel"              %% "scalaz-specs2"             % "0.5.0"                              % Test
+    "org.typelevel"              %% "shapeless-scalacheck"      % "0.6.1"                              % Test,
+    "org.typelevel"              %% "scalaz-specs2"             % "0.5.2"                              % Test
   )
 
   def frontend = Seq(
@@ -79,8 +80,7 @@ object Dependencies {
     // Removing this will not cause any compile time errors, but will cause a runtime error once
     // Quasar attempts to connect to an h2 database to use as a metastore
     "com.h2database"              % "h2"                        % "1.4.196",
-    ("org.tpolecat"               %% "doobie-specs2"             % doobieVersion % Test)
-      .exclude("org.specs2", "specs2-core_2.11") // conflicting version
+    "org.tpolecat"               %% "doobie-specs2"             % doobieVersion % Test
   )
   def interface = Seq(
     "com.github.scopt" %% "scopt" % "3.5.0",
@@ -106,8 +106,7 @@ object Dependencies {
       "org.tpolecat" %% "doobie-hikari"     % doobieVersion,
       "org.tpolecat" %% "doobie-h2"         % doobieVersion,
       "com.github.alexarchambault" %% "scalacheck-shapeless_1.13" % "1.1.6" % Test,
-      ("org.tpolecat" %% "doobie-specs2"     % doobieVersion % Test)
-        .exclude("org.specs2", "specs2-core_2.11") // conflicting version
+      "org.tpolecat" %% "doobie-specs2"     % doobieVersion % Test
     )
   }
 
@@ -172,7 +171,7 @@ object Dependencies {
   )
   val couchbase = Seq(
     "com.couchbase.client" %  "java-client" % "2.3.5",
-    "io.reactivex"         %% "rxscala"     % "0.26.3",
+    "io.reactivex"         %% "rxscala"     % "0.26.4",
     "org.http4s"           %% "http4s-core" % http4sVersion,
     "log4j"                %  "log4j"       % "1.2.17" % Test
   )
@@ -183,20 +182,20 @@ object Dependencies {
     "org.http4s"     %% "http4s-server"       % http4sVersion,
     "org.http4s"     %% "http4s-blaze-server" % http4sVersion,
     "org.http4s"     %% "http4s-blaze-client" % http4sVersion,
-    "org.scodec"     %% "scodec-scalaz"       % "1.3.0a",
+    "org.scodec"     %% "scodec-scalaz"       % "1.4.1a",
     "org.scodec"     %% "scodec-bits"         % scodecBitsVersion,
     "com.propensive" %% "rapture-json"        % raptureVersion     % Test,
     "com.propensive" %% "rapture-json-json4s" % raptureVersion     % Test,
     "eu.timepit"     %% "refined-scalacheck"  % refinedVersion     % Test
   )
   def precog = Seq(
-    "org.slf4s"            %% "slf4s-api"       % "1.7.13",
+    "org.slf4s"            %% "slf4s-api"       % "1.7.25",
     "org.slf4j"            %  "slf4j-log4j12"   % "1.7.16",
     "org.typelevel"        %% "spire"           % spireVersion,
-    "org.scodec"           %% "scodec-scalaz"   % "1.3.0a",
+    "org.scodec"           %% "scodec-scalaz"   % "1.4.1a",
     "org.apache.jdbm"      %  "jdbm"            % "3.0-alpha5",
-    "com.typesafe.akka"    %  "akka-actor_2.11" % "2.5.1",
-    ("org.quartz-scheduler" %  "quartz"          % "2.3.0")
+    "com.typesafe.akka"    %%  "akka-actor"     % "2.5.1",
+    ("org.quartz-scheduler" %  "quartz"         % "2.3.0")
       .exclude("com.zaxxer", "HikariCP-java6"), // conflict with Doobie
     "commons-io"           %  "commons-io"      % "2.5",
     "org.scodec"           %% "scodec-bits"     % scodecBitsVersion

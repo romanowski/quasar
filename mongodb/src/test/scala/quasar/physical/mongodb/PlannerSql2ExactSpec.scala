@@ -57,7 +57,7 @@ class PlannerSql2ExactSpec extends
   import CollectionUtil._
 
   import fixExprOp._
-  import PlannerHelpers._, expr3_0Fp._, expr3_2Fp._, expr3_4Fp._
+  import PlannerHelpers._, expr3_4Fp._
 
   val dsl =
     quasar.qscript.construction.mkDefaults[Fix, fs.MongoQScript[Fix, ?]]
@@ -170,6 +170,46 @@ class PlannerSql2ExactSpec extends
             ExcludeId)))
     }
 
+    "plan metal count(*)" in {
+      planMetal(sqlE"select count(*) from zips") must beSome("db.zips.count();\n")
+    }
+
+    "plan metal count(*) limit 10" in {
+      planMetal(sqlE"select count(*) from zips limit 10") must beSome("db.zips.count();\n")
+    }
+
+    "plan metal count(*) alias" in {
+      planMetal(sqlE"select count(*) as c from zips") must beSome("db.zips.count();\n")
+    }
+
+    "plan metal count(*) alias limit" in {
+      planMetal(sqlE"select count(*) as c from zips limit 10") must beSome("db.zips.count();\n")
+    }
+
+    "plan metal count(*) filter" in {
+      planMetal(sqlE"""select count(*) from zips where city = "HAMPDEN" """) must beSome(
+        """db.zips.count({ "city": "HAMPDEN" });
+          |""".stripMargin)
+    }
+
+    "plan metal count(*) filter limit 10" in {
+      planMetal(sqlE"""select count(*) from zips where city = "HAMPDEN" limit 10""") must beSome(
+        """db.zips.count({ "city": "HAMPDEN" });
+          |""".stripMargin)
+    }
+
+    "plan metal count(*) filter alias" in {
+      planMetal(sqlE"""select count(*) as c from zips where city = "HAMPDEN" """) must beSome(
+        """db.zips.count({ "city": "HAMPDEN" });
+          |""".stripMargin)
+    }
+
+    "plan metal count(*) filter alias limit" in {
+      planMetal(sqlE"""select count(*) as c from zips where city = "HAMPDEN" limit 10""") must beSome(
+        """db.zips.count({ "city": "HAMPDEN" });
+          |""".stripMargin)
+    }
+
     "plan simple field projection on single set" in {
       plan(sqlE"select cars.name from cars") must
         beWorkflow(chain[Workflow](
@@ -216,32 +256,13 @@ class PlannerSql2ExactSpec extends
                      $lt($field("val1"), $literal(Bson.Text("")))),
                    $and(
                      $lte($literal(Check.minDate), $field("val1")),
-                     $lt($field("val1"), $literal(Bson.Regex("", ""))))),
+                     $lt($field("val1"), $literal(Check.minTimestamp)))),
                  $add($field("val1"), $field("val2")),
                  $literal(Bson.Undefined)),
                $literal(Bson.Undefined))),
            ExcludeId)))
     }
 
-    "plan concat (3.0-)" in {
-      plan3_0(sqlE"select concat(city, state) from extraSmallZips") must
-       beWorkflow(chain[Workflow](
-         $read(collection("db", "extraSmallZips")),
-         $project(
-           reshape(sigil.Quasar ->
-             $cond(
-               $and(
-                 $lte($literal(Bson.Text("")), $field("state")),
-                 $lt($field("state"), $literal(Bson.Doc()))),
-               $cond(
-                 $and(
-                   $lte($literal(Bson.Text("")), $field("city")),
-                   $lt($field("city"), $literal(Bson.Doc()))),
-                 $concat($field("city"), $field("state")),
-                 $literal(Bson.Undefined)),
-               $literal(Bson.Undefined))),
-           ExcludeId)))
-    }
 
     "plan concat (3.2+)" in {
       plan3_2(sqlE"select concat(city, state) from extraSmallZips") must
@@ -382,15 +403,6 @@ class PlannerSql2ExactSpec extends
            ExcludeId)))
     }
 
-    "plan select array (map-reduce)" in {
-      plan2_6(sqlE"select [city, loc, pop] from extraSmallZips") must
-       beWorkflow(chain[Workflow](
-         $read(collection("db", "extraSmallZips")),
-         $simpleMap(
-           NonEmptyList(MapExpr(JsFn(Name("x"),
-             underSigil(Arr(List(Select(ident("x"), "city"), Select(ident("x"), "loc"), Select(ident("x"), "pop"))))))),
-             ListMap())))
-    }
 
     "plan select map" in {
       plan(sqlE"""select { "p": pop } from extraSmallZips""") must
@@ -432,7 +444,7 @@ class PlannerSql2ExactSpec extends
              $cond(
                $and(
                  $lte($literal(Check.minDate), $field("ts")),
-                 $lt($field("ts"), $literal(Bson.Regex("", "")))),
+                 $lt($field("ts"), $literal(Check.minTimestamp))),
                $dayOfMonth($field("ts")),
                $literal(Bson.Undefined))),
            ExcludeId)))
@@ -448,7 +460,7 @@ class PlannerSql2ExactSpec extends
                $cond(
                  $and(
                    $lte($literal(Check.minDate), $field("ts")),
-                   $lt($field("ts"), $literal(Bson.Regex("", "")))),
+                   $lt($field("ts"), $literal(Check.minTimestamp))),
                  $trunc(
                    $add(
                      $divide(
@@ -469,7 +481,7 @@ class PlannerSql2ExactSpec extends
                $cond(
                  $and(
                    $lte($literal(Check.minDate), $field("ts")),
-                   $lt($field("ts"), $literal(Bson.Regex("", "")))),
+                   $lt($field("ts"), $literal(Check.minTimestamp))),
                  $subtract($dayOfWeek($field("ts")), $literal(Bson.Int32(1))),
                  $literal(Bson.Undefined))),
            ExcludeId)))
@@ -485,7 +497,7 @@ class PlannerSql2ExactSpec extends
                $cond(
                  $and(
                    $lte($literal(Check.minDate), $field("ts")),
-                   $lt($field("ts"), $literal(Bson.Regex("", "")))),
+                   $lt($field("ts"), $literal(Check.minTimestamp))),
                  $cond($eq($dayOfWeek($field("ts")), $literal(Bson.Int32(1))),
                    $literal(Bson.Int32(7)),
                    $subtract($dayOfWeek($field("ts")), $literal(Bson.Int32(1)))),
@@ -712,7 +724,7 @@ class PlannerSql2ExactSpec extends
                      $lt($field("val1"), $literal(Bson.Text("")))),
                    $and(
                      $lte($literal(Check.minDate), $field("val1")),
-                     $lt($field("val1"), $literal(Bson.Regex("", ""))))),
+                     $lt($field("val1"), $literal(Check.minTimestamp)))),
                  $add($field("val1"), $field("val3")),
                  $literal(Bson.Undefined)),
                $literal(Bson.Undefined))),
@@ -1376,27 +1388,6 @@ class PlannerSql2ExactSpec extends
             ListMap())))
     }
 
-    "plan array project with concat (3.0-)" in {
-      plan3_0(sqlE"select city, loc[0] from zips") must
-        beWorkflow {
-          chain[Workflow](
-            $read(collection("db", "zips")),
-            $simpleMap(
-              NonEmptyList(
-                MapExpr(JsFn(Name("x"), obj(
-                  "city" -> Select(ident("x"), "city"),
-                  "1" ->
-                    If(Call(Select(ident("Array"), "isArray"), List(Select(ident("x"), "loc"))),
-                      Access(Select(ident("x"), "loc"), jscore.Literal(Js.Num(0, false))),
-                      ident("undefined")))))),
-              ListMap()),
-            $project(
-              reshape(
-                "city" -> $include(),
-                "1"    -> $include()),
-              ExcludeId))
-        }
-    }
 
     "plan array project with concat (3.2+)" in {
       plan3_2(sqlE"select city, loc[0] from zips") must
@@ -1683,7 +1674,7 @@ class PlannerSql2ExactSpec extends
     "plan time_of_day (pipeline)" in {
       import FormatSpecifier._
 
-      plan3_0(sqlE"select time_of_day(ts) from days") must
+      plan3_2(sqlE"select time_of_day(ts) from days") must
         beWorkflow(chain[Workflow](
           $read(collection("db", "days")),
           $project(
@@ -1691,7 +1682,7 @@ class PlannerSql2ExactSpec extends
               $cond(
                 $and(
                   $lte($literal(Check.minDate), $field("ts")),
-                  $lt($field("ts"), $literal(Bson.Regex("", "")))),
+                  $lt($field("ts"), $literal(Check.minTimestamp))),
                 $dateToString(Hour :: ":" :: Minute :: ":" :: Second :: "." :: Millisecond :: FormatString.empty, $field("ts")),
                 $literal(Bson.Undefined))),
             ExcludeId)))
@@ -1807,49 +1798,48 @@ class PlannerSql2ExactSpec extends
       }
     }
 
-    "plan simple join (map-reduce)" in {
-      plan2_6(sqlE"select smallZips.city from zips join smallZips on zips.`_id` = smallZips.`_id`") must
-        beWorkflow0(
-          joinStructure(
-            $read(collection("db", "zips")), "0", $$ROOT,
-            $read(collection("db", "smallZips")),
-            reshape("0" -> $field("_id")),
-            Obj(ListMap(Name("0") -> Select(ident("value"), "_id"))).right,
-            chain[Workflow](_,
-              $match(Selector.Doc(ListMap[BsonField, Selector.SelectorExpr](
-                JoinHandler.LeftName -> Selector.NotExpr(Selector.Size(0)),
-                JoinHandler.RightName -> Selector.NotExpr(Selector.Size(0))))),
-              $unwind(DocField(JoinHandler.RightName)),
-              $unwind(DocField(JoinHandler.LeftName)),
-              $project(
-                reshape(sigil.Quasar -> $field(JoinDir.Right.name, "city")),
-                ExcludeId)),
-            false).op)
-    }
+    def simpleJoinMapReduce(coll1: Collection, coll2: Collection) =
+      joinStructure(
+        $read(coll1), "0", $$ROOT,
+        $read(coll2),
+        reshape("0" -> $field("_id")),
+        Obj(ListMap(Name("0") -> Select(ident("value"), "_id"))).right,
+        chain[Workflow](_,
+          $match(Selector.Doc(ListMap[BsonField, Selector.SelectorExpr](
+            JoinHandler.LeftName -> Selector.NotExpr(Selector.Size(0)),
+            JoinHandler.RightName -> Selector.NotExpr(Selector.Size(0))))),
+          $unwind(DocField(JoinHandler.RightName)),
+          $unwind(DocField(JoinHandler.LeftName)),
+          $project(
+            reshape(sigil.Quasar -> $field(JoinDir.Right.name, "city")),
+            ExcludeId)),
+        false).op
+
+    val simpleJoinMapReduceDb =
+      simpleJoinMapReduce(collection("db", "zips"), collection("db", "smallZips"))
 
     "plan simple join with sharded inputs" in {
-      // NB: cannot use $lookup, so fall back to the old approach
+      // NB: cannot use $lookup, so fall back to map-reduce
       val query = sqlE"select smallZips.city from zips join smallZips on zips.`_id` = smallZips.`_id`"
       plan3_4(query,
         c => Map(
           collection("db", "zips") -> CollectionStatistics(10, 100, true),
-          collection("db", "zips2") -> CollectionStatistics(15, 150, true)).get(c),
+          collection("db", "smallZips") -> CollectionStatistics(15, 150, true)).get(c),
         defaultIndexes,
-        emptyDoc) must_==
-        plan2_6(query)
+        emptyDoc) must beWorkflow(simpleJoinMapReduceDb)
     }
 
     "plan simple join with sources in different DBs" in {
-      // NB: cannot use $lookup, so fall back to the old approach
+      // NB: cannot use $lookup, so fall back to map-reduce
       val query = sqlE"select smallZips.city from `db1/zips` join `db2/smallZips` on zips.`_id` = smallZips.`_id`"
-      plan0(query, rootDir[Sandboxed], MongoQueryModel.`3.4`, defaultStats, defaultIndexes, emptyDoc) must_==
-        plan0(query, rootDir[Sandboxed], MongoQueryModel.`2.6`, defaultStats, defaultIndexes, emptyDoc)
+      plan0(query, rootDir[Sandboxed], MongoQueryModel.`3.4`, defaultStats, defaultIndexes, emptyDoc) must
+        beWorkflow(simpleJoinMapReduce(collection("db1", "zips"), collection("db2", "smallZips")))
     }
 
     "plan simple join with no index" in {
-      // NB: cannot use $lookup, so fall back to the old approach
+      // NB: cannot use $lookup, so fall back to map-reduce
       val query = sqlE"select smallZips.city from zips join smallZips on zips.`_id` = smallZips.`_id`"
-      plan3_4(query, defaultStats, κ(None), emptyDoc) must_== plan2_6(query)
+      plan3_4(query, defaultStats, κ(None), emptyDoc) must beWorkflow(simpleJoinMapReduceDb)
     }
   }
 }

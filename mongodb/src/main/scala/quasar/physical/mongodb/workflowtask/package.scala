@@ -60,16 +60,16 @@ package object workflowtask {
       (DocVar, WorkflowTask) = task match {
     case PipelineTask(src, pipeline) =>
       // possibly toss duplicate `_id`s created by `Unwind`s
-      val uwIdx = pipeline.map(_.op.run).lastIndexWhere {
-        case \/-($UnwindF(_, _)) => true
+      val uwIdx = pipeline.map(_.op).lastIndexWhere {
+        case $UnwindF(_, _) => true
         case _ => false
       }
       // we’re fine if there’s no `Unwind`, or some existing op fixes the `_id`s
       if (uwIdx == -1 ||
-        pipeline.map(_.op.run).indexWhere(
-          { case \/-($GroupF(_, _, _))           => true
-            case \/-($ProjectF(_, _, ExcludeId)) => true
-            case _                              => false
+        pipeline.map(_.op).indexWhere(
+          { case $GroupF(_, _, _)           => true
+            case $ProjectF(_, _, ExcludeId) => true
+            case _                          => false
           },
           uwIdx) != -1)
         (base, task)
@@ -100,7 +100,6 @@ package object workflowtask {
     def src = shape(p.dropRight(1))
 
     val WC = Inject[WorkflowOpCoreF, WorkflowF]
-    val W32 = Inject[WorkflowOp3_2F, WorkflowF]
 
     p.lastOption.flatMap(_.op match {
       case IsShapePreserving(_)                        => src
@@ -111,7 +110,7 @@ package object workflowtask {
       case WC($RedactF((), _))                          => None
       case WC($GeoNearF((), _, _, _, _, _, _, _, _, _)) => src.map(_ :+ BsonField.Name("dist"))
 
-      case W32($LookupF((), _, _, _, as))               => src.map(_ :+ as.flatten.head)
+      case WC($LookupF((), _, _, _, as))               => src.map(_ :+ as.flatten.head)
     })
   }
 }

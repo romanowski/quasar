@@ -18,6 +18,8 @@ package quasar.yggdrasil.vfs
 
 import quasar.contrib.pathy.{unsafeSandboxAbs, ADir, AFile, APath, RPath}
 import quasar.contrib.scalaz.stateT, stateT._
+import quasar.fp.ski.ι
+import quasar.fp.free._
 import quasar.fs.MoveSemantics
 
 import argonaut.{Argonaut, Parse}
@@ -27,9 +29,9 @@ import fs2.async, async.mutable
 import fs2.interop.scalaz._
 import fs2.util.Async
 
-import pathy.Path
+import pathy.Path, Path.file
 
-import scalaz.{~>, :<:, Coproduct, Free, Monad, NaturalTransformation, StateT}
+import scalaz.{~>, :<:, Coproduct, Equal, Free, Monad, NaturalTransformation, Show, StateT}
 import scalaz.concurrent.Task
 import scalaz.std.list._
 import scalaz.std.map._
@@ -38,9 +40,14 @@ import scalaz.std.vector._
 import scalaz.syntax.equal._
 import scalaz.syntax.monad._
 import scalaz.syntax.monoid._
+import scalaz.syntax.show._
 import scalaz.syntax.traverse._
+import scalaz.syntax.std.boolean._
 
+import scodec.Codec
 import scodec.bits.ByteVector
+import scodec.codecs, codecs.uint16
+import scodec.interop.scalaz.ByteVectorMonoidInstance
 
 import java.io.File
 import java.util.UUID
@@ -64,8 +71,80 @@ object FreeVFS {
 
   private type ST[F[_], A] = StateT[F, VFS, A]
 
+  val currentVFSVersion: VFSVersion = VFSVersion.VFSVersion0
+  val currentMetaVersion: MetaVersion = MetaVersion.MetaVersion0
+
+  sealed abstract class VFSVersion
+
+  object VFSVersion {
+    final case object VFSVersion0 extends VFSVersion
+
+    implicit val codec: Codec[VFSVersion] =
+      codecs.discriminated[VFSVersion].by(uint16)
+        .typecase(0, codecs.provide(VFSVersion0))
+
+    implicit val show: Show[VFSVersion] = Show.showFromToString
+
+    implicit val equal: Equal[VFSVersion] = Equal.equalA
+  }
+
+  sealed abstract class MetaVersion
+
+  object MetaVersion {
+    final case object MetaVersion0 extends MetaVersion
+
+    implicit val codec: Codec[MetaVersion] =
+      codecs.discriminated[MetaVersion].by(uint16)
+        .typecase(0, codecs.provide(MetaVersion0))
+
+    implicit val show: Show[MetaVersion] = Show.showFromToString
+
+    implicit val equal: Equal[MetaVersion] = Equal.equalA
+  }
+
+  def writeVersion[S[_], A](
+    path: AFile, currentVersion: A
+  )(implicit
+    S0: POSIXOp :<: S, S1: Task :<: S, C: Codec[A]
+  ): Free[S, Unit] =
+    for {
+      verSink <- POSIX.openW[S](path)
+      v <- lift(C.encode(currentVersion).fold(
+        e => Task.fail(new RuntimeException(e.message)),
+        _.toByteVector.η[Task]): Task[ByteVector]).into
+      verWriter = Stream.emit(v).to(verSink).run
+      _ <- POSIXWithTask.generalize(verWriter)
+    } yield ()
+
+  def initVersion[S[_], A: Equal: Show](
+    path: AFile, currentVersion: A
+  )(implicit
+    S0: POSIXOp :<: S, S1: Task :<: S, C: Codec[A]
+  ): Free[S, Unit] = {
+    def checkAndUpdateVersion: Free[S, Unit] =
+      for {
+        verStream <- POSIX.openR[S](path)
+        verBV <- verStream.runFoldMap(ι).mapSuspension(injectNT[POSIXOp, S] :+: injectNT[Task, S])
+        ver <- lift(
+          C.decode(verBV.toBitVector).fold(
+            e => Task.fail(new RuntimeException(e.message)),
+            r => r.remainder.isEmpty.fold(
+              r.value.η[Task],
+              Task.fail(new RuntimeException(
+                s"Unexpected VERSION, ${r.remainder.toBin}"))))).into
+        _ <- (ver ≠ currentVersion).whenM(
+          lift(Task.fail(new RuntimeException(
+            s"Unexpected VERSION. Found ${ver.shows}, current is ${currentVersion.shows}"
+          ))).into[S])
+      } yield ()
+
+    POSIX.exists[S](path).ifM(checkAndUpdateVersion, writeVersion(path, currentVersion))
+  }
+
   def init[S[_]](baseDir: ADir)(implicit IP: POSIXOp :<: S, IT: Task :<: S): Free[S, VFS] = {
     for {
+      _ <- initVersion(baseDir </> file("VFSVERSION"), currentVFSVersion)
+
       exists <- POSIX.exists[S](baseDir </> MetaDir)
 
       triple <- if (!exists) {
@@ -124,6 +203,8 @@ object FreeVFS {
     for {
       v <- VersionLog.fresh[S]
       target <- VersionLog.underlyingDir[Free[S, ?]](v)
+
+      _ <- writeVersion(target </> file("METAVERSION"), currentMetaVersion).liftM[StateT[?[_], VersionLog, ?]]
 
       pathsSink <- POSIX.openW[S](target </> PathsFile).liftM[StateT[?[_], VersionLog, ?]]
 
@@ -214,7 +295,12 @@ object FreeVFS {
 
   def exists[F[_]: Monad](path: APath): StateT[F, VFS, Boolean] = {
     Path.refineType(path).fold(
-      dir => StateTContrib.get[F, VFS].map(_.index.contains(dir)),
+      dir =>
+        if (dir ≟ Path.rootDir)
+          true.point[StateT[F, VFS, ?]] // root directory always exists
+        else {
+          StateTContrib.get[F, VFS].map(_.index.contains(dir))
+        },
       file => StateTContrib.get[F, VFS].map(_.paths.contains(file)))
   }
 

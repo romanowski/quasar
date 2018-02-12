@@ -23,6 +23,7 @@ import quasar.precog.util._
 
 import java.time.ZonedDateTime
 
+import scala.reflect.ClassTag
 import scala.specialized
 
 trait DefinedAtIndex {
@@ -51,7 +52,7 @@ object ArrayHomogeneousArrayColumn {
   def apply[@specialized(Boolean, Long, Double) A: CValueType](defined: BitSet, values: Array[Array[A]]) =
     new ArrayHomogeneousArrayColumn(defined.copy, values)(CArrayType(CValueType[A]))
   def empty[@specialized(Boolean, Long, Double) A](size: Int)(implicit elemType: CValueType[A]): ArrayHomogeneousArrayColumn[A] = {
-    implicit val m: CTag[A] = elemType.classTag
+    implicit val m: ClassTag[A] = elemType.classTag
 
     new ArrayHomogeneousArrayColumn(new BitSet, new Array[Array[A]](size))(CArrayType(elemType))
   }

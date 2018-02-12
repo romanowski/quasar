@@ -77,14 +77,14 @@ sealed abstract class ExtractPathInstances extends ExtractPathInstances0 {
   ): ExtractPath[QScriptCore[T, ?], P] =
     new ExtractPath[QScriptCore[T, ?], P] {
       def extractPath[G[_]: ApplicativePlus] = {
-        case Filter(paths, _)          => paths
-        case LeftShift(paths, _, _, _) => paths
-        case Map(paths, _)             => paths
-        case Reduce(paths, _, _, _)    => paths
-        case Sort(paths, _, _)         => paths
-        case Subset(paths, fm, _, ct)  => extractBranch[T, G, P](fm) <+> extractBranch[T, G, P](ct) <+> paths
-        case Union(paths, l, r)        => extractBranch[T, G, P](l)  <+> extractBranch[T, G, P](r)  <+> paths
-        case Unreferenced()            => mempty[G, P]
+        case Filter(paths, _)             => paths
+        case LeftShift(paths, _, _, _, _) => paths
+        case Map(paths, _)                => paths
+        case Reduce(paths, _, _, _)       => paths
+        case Sort(paths, _, _)            => paths
+        case Subset(paths, fm, _, ct)     => extractBranch[T, G, P](fm) <+> extractBranch[T, G, P](ct) <+> paths
+        case Union(paths, l, r)           => extractBranch[T, G, P](l)  <+> extractBranch[T, G, P](r)  <+> paths
+        case Unreferenced()               => mempty[G, P]
       }
     }
 

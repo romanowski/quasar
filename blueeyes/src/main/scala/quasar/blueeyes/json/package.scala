@@ -39,12 +39,6 @@ package object json {
   implicit val JPathOrder: Order[JPath]         = Order orderBy (_.nodes)
   implicit val JPathOrdering                    = JPathOrder.toScalaOrdering
 
-  implicit val JObjectMergeMonoid = new Monoid[JObject] {
-    val zero = JObject(Nil)
-
-    def append(v1: JObject, v2: => JObject): JObject = v1.merge(v2).asInstanceOf[JObject]
-  }
-
   val NoJPath     = JPath()
   type JPath      = quasar.precog.JPath
   type JPathNode  = quasar.precog.JPathNode
@@ -66,7 +60,7 @@ package object json {
     def apply(index: Int): JPathNode = nodes(index)
     def head: Option[JPathNode]      = nodes.headOption
     def tail: JPath                  = JPath(nodes.tail)
-    def path: String                 = x.to_s
+    def path: String                 = x.toString
 
     def ancestors: List[JPath] = {
       def loop(path: JPath, acc: List[JPath]): List[JPath] = path.parent.fold(acc)(p => loop(p, p :: acc))
@@ -221,9 +215,6 @@ package object json {
 
   implicit class JValueOps(private val self: JValue) {
     import Validation._
-
-    def diff(other: JValue)          = Diff.diff(self, other)
-    def merge(other: JValue): JValue = Merge.merge(self, other)
 
     def typeIndex: Int = self match {
       case JUndefined => -1
@@ -646,6 +637,8 @@ package object json {
       */
     def filter(p: JValue => Boolean): List[JValue] =
       foldDown(List.empty[JValue])((acc, e) => if (p(e)) e :: acc else acc).reverse
+
+    def withFilter(p: JValue => Boolean): List[JValue] = filter(p)
 
     def flatten: List[JValue] =
       foldDown(List.empty[JValue])((acc, e) => e :: acc).reverse

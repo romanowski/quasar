@@ -83,7 +83,7 @@ class MetadataServiceSpec extends quasar.Qspec with FileSystemFixture with Http4
     }
 
     "respond with OK" >> {
-      "and empty list for existing empty directory" >> {
+      "and empty list if root is empty" >> {
         service(InMemState.empty, Map())(Request(uri = Uri(path = "/")))
           .as[Json].unsafePerformSync must_== Json("children" -> jEmptyArray)
       }

@@ -3,8 +3,6 @@
     "backends": {
         "marklogic_json":    "ignoreFieldOrder",
         "mimir":             "ignoreFieldOrder",
-        "mongodb_2_6":       "pendingIgnoreFieldOrder",
-        "mongodb_3_0":       "pendingIgnoreFieldOrder",
         "mongodb_3_2":       "ignoreFieldOrder",
         "mongodb_3_4":       "ignoreFieldOrder",
         "mongodb_read_only": "pending"

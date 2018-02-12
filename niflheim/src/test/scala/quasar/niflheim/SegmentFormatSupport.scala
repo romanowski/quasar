@@ -51,6 +51,9 @@ trait SegmentFormatSupport {
     seeds <- Gen.listOfN(length, arbitrary[Double])
   } yield BitSetUtil.create(seeds.map(_ < density).zipWithIndex.map(_._2))
 
+  private def genForCTypeArray[A](elemType: CValueType[A]): Gen[Array[A]] =
+      listOf(genForCType(elemType)) map (_.toArray(elemType.classTag))
+
   def genForCType[A](ctype: CValueType[A]): Gen[A] = ctype match {
     case CPeriod => ??? // arbitrary[Long].map(new Period(_))
     case CBoolean => arbitrary[Boolean]
@@ -61,11 +64,7 @@ trait SegmentFormatSupport {
     case CDate =>
       Gen.choose[Long](0, 1494284624296L).map(t =>
         ZonedDateTime.ofInstant(Instant.ofEpochSecond(t % Instant.MAX.getEpochSecond), ZoneOffset.UTC))
-    case CArrayType(elemType: CValueType[a]) =>
-      implicit val tag = elemType.classTag    // don't try to pass this explicitly!
-      val list: Gen[List[a]] = listOf(genForCType(elemType))
-      val array: Gen[Array[a]] = list map (_.toArray)
-      array
+    case CArrayType(elemType) => genForCTypeArray(elemType)
   }
 
   def genCValueType(maxDepth: Int = 2): Gen[CValueType[_]] = {

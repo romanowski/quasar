@@ -1,0 +1,19 @@
+{
+  "name": "[qa_s01] select wildcart",
+
+  "data": "basic.data",
+
+  "query": "select * from basic",
+
+  "predicate": "exactly",
+  "ignoreResultOrder": true,
+
+  "ignoredFields": ["_id"],
+
+  "ignoreFieldOrder": true,
+
+  "expected": [
+    {"name": {"first": "John", "last": "Smith"}, "num": 4},
+    {"name": {"first": "Janina", "last": "Kowalska"}, "num": 42}
+  ]
+}

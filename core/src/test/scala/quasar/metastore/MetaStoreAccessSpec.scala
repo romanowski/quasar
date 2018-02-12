@@ -19,7 +19,7 @@ package quasar.metastore
 import slamdata.Predef._
 import quasar.Variables
 import quasar.fs.FileSystemType
-import quasar.fs.mount.{ConnectionUri, MountConfig}
+import quasar.fs.mount.{ConnectionUri, MountConfig, MountType}
 import quasar.fs.mount.cache.ViewCache
 import quasar.sql._
 
@@ -49,11 +49,17 @@ abstract class MetaStoreAccessSpec extends Specification with TaskChecker with M
     val viewCache = ViewCache(
       MountConfig.ViewConfig(sqlB"α", Variables.empty), None, None, 0, None, None,
       0, instant, ViewCache.Status.Pending, None, f, None)
+    val pathedMountConfig = PathedMountConfig(
+      rootDir </> file("mimir"),
+      MountType.fileSystemMount(FileSystemType("local")),
+      ConnectionUri("/tmp/local"))
 
     // NB: these tests do not execute the queries or validate results, but only
     // type-check them against the schema available via the transactor.
 
     check(Queries.fsMounts)
+    check(Queries.mounts)
+    check(Queries.insertPathedMountConfig(pathedMountConfig))
     check(Queries.mountsHavingPrefix(rootDir))
     check(Queries.lookupMountType(rootDir))
     check(Queries.lookupMountConfig(rootDir))

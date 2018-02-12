@@ -79,7 +79,7 @@ final class QScriptCorePlanner[
         groupBy = none,
         orderBy = nil).embed
 
-    case LeftShift(src, struct, id, repair) =>
+    case LeftShift(src, struct, id, _, repair) =>
       for {
         id1 <- genId[T[N1QL], F]
         id2 <- genId[T[N1QL], F]

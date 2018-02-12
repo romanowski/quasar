@@ -30,7 +30,7 @@ import pathy.Path._
 import scalaz._, Scalaz._
 import scalaz.concurrent.Task
 
-object MongoDbSpec {
+object MongoDbSpec extends ScalazSpecs2Instances {
   def connect(uri: ConnectionUri): Task[MongoClient] =
     asyncClientDef[Task](uri).run.foldMap(NaturalTransformation.refl).flatMap(_.fold(
       err => Task.fail(new RuntimeException(err.toString)),

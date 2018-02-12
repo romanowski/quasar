@@ -19,7 +19,7 @@ package quasar.qscript.qsu
 import slamdata.Predef._
 
 import quasar.NameGenerator
-import quasar.Planner.{InternalError, PlannerErrorME}
+import quasar.Planner.PlannerErrorME
 import quasar.contrib.scalaz.MonadState_
 import quasar.ejson.EJson
 import quasar.ejson.implicits._
@@ -35,7 +35,7 @@ import quasar.qscript.{
   MFC,
   ReduceFunc}
 import quasar.qscript.MapFuncCore.{EmptyMap, StaticMap}
-import quasar.qscript.provenance.JoinKeys.JoinKey
+import quasar.qscript.provenance.JoinKey
 import quasar.qscript.qsu.{QScriptUniform => QSU}
 import quasar.qscript.qsu.ApplyProvenance.AuthenticatedQSU
 
@@ -101,7 +101,7 @@ final class ReifyIdentities[T[_[_]]: BirecursiveT: ShowT] private () extends QSU
     }
 
   private def shiftTargetAccess(src: Symbol, bucket: FreeMapA[QSU.ShiftTarget[T]]): ISet[QAccess[Symbol]] =
-    Foldable[FreeMapA].foldMap(bucket) { 
+    Foldable[FreeMapA].foldMap(bucket) {
       case QSU.AccessLeftTarget(access) => ISet.singleton(access.symbolic(κ(src)))
       case _ => ISet.empty
     }
@@ -114,7 +114,8 @@ final class ReifyIdentities[T[_[_]]: BirecursiveT: ShowT] private () extends QSU
   private def recordAccesses[F[_]: Foldable](by: Symbol, fa: F[QAccess[Symbol]]): References =
     fa.foldLeft(References.noRefs[T, T[EJson]])((r, a) => r.recordAccess(by, a, defaultAccess(a)))
 
-  private final case class ReifyState(status: ReifiedStatus, refs: References) {
+  // We can't use final here due to SI-4440 - it results in warning
+  private case class ReifyState(status: ReifiedStatus, refs: References) {
     lazy val seen: ISet[Symbol] = status.keySet
   }
 
@@ -136,7 +137,7 @@ final class ReifyIdentities[T[_[_]]: BirecursiveT: ShowT] private () extends QSU
         recordAccesses(g.root, bucketIdAccess(source, buckets))
 
       case QSU.QSAutoJoin(left, right, joinKeys, combiner) =>
-        val keysAccess = joinKeys.keys >>= (joinKeyAccess(g.root, _))
+        val keysAccess = joinKeys.keys >>= (_.list) >>= (joinKeyAccess(g.root, _))
         recordAccesses(g.root, keysAccess)
 
       case other => References.noRefs
@@ -406,23 +407,24 @@ final class ReifyIdentities[T[_[_]]: BirecursiveT: ShowT] private () extends QSU
         (emitsIVMap(left) |@| emitsIVMap(right)).tupled flatMap {
           /** FIXME: https://github.com/quasar-analytics/quasar/issues/3114
             *
-            * In this case, we need to nest the identities from each side in a new map
-            *   { i: {left: ids(left), right: ids(right)}, v: combiner }
-            *
-            * We then need to determine which ids could possibly exist in each of the sub maps.
-            *   + should be able to use the status map's keySet to help here, or we just grab
-            *     all the vertices in each branch. From these sets, we can see what possible
-            *     ids are related to those vertices.
-            *
-            * For each set of identity access, we need to update access by any
-            * vertices _not_ visited thus far, adding the appropriate projection
-            * into the L/R side of the identity map.
+            * This implementation is not correct, in general, but should produce
+            * correct results unless the left and right identity maps both contain
+            * an entry for the same key with a different values.
             */
           case (true, true) =>
-            PlannerErrorME[G].raiseError(InternalError(
-              s"ThetaJoin[${g.root}] where both branches carry identities is not " +
-              "yet supported, see https://github.com/quasar-analytics/quasar/issues/3114.",
-              None))
+            onNeedsIV(g) as {
+              val newCondition =
+                condition >>= (lookupValue as _)
+
+              val newCombiner =
+                makeIV(
+                  func.ConcatMaps(
+                    lookupIdentities >> func.LeftSide,
+                    lookupIdentities >> func.RightSide),
+                  rebaseV(combiner))
+
+              g.overwriteAtRoot(O.thetaJoin(left.root, right.root, newCondition, joinType, newCombiner))
+            }
 
           case (true, false) =>
             onNeedsIV(g) as {

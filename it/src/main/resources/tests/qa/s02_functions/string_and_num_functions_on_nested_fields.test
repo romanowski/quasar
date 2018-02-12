@@ -1,0 +1,26 @@
+{
+  "name": "[qa_s02] string and num functions on nested fields",
+
+  "backends": {
+    "marklogic_json": "pending"
+  },
+
+  "data": "functionsNested.data",
+
+  "query": "select upper(n.first.word) as un,
+                  (a.nested.deeper + plusAge) as aa
+                  from (select name as n, age as a, plusAge, aFlag, nestedFlag from functionsNested
+                  where (aFlag and nestedFlag.level1.level2.level3))",
+
+  "predicate": "exactly",
+  "ignoreResultOrder": false,
+
+  "ignoredFields": [],
+
+  "ignoreFieldOrder": true,
+
+  "expected": [
+    {"un": "PAUL", "aa": 35},
+    {"un": "DICK", "aa": 19}
+  ]
+}

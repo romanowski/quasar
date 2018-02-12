@@ -54,7 +54,7 @@ object analysis {
     ): Free[S, ApiError \/ Json] =
       quasar.resolveImports(scopedExpr, basePath).run.flatMap(block =>
         block.fold(
-          semErr => semErr.toApiError.left.point[Free[S, ?]],
+          semErr => semErr.toApiError.left[Json].point[Free[S, ?]],
           block => queryPlan(block, vars, basePath, offset, limit)
                     .run.value
                     .traverse(lp => A.queryCost(lp).bimap(_.toApiError, _.asJson).run)

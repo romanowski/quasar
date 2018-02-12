@@ -1,0 +1,24 @@
+{
+    "name": "games_step1",
+    "data": "steamgames.data",
+    "backends": {
+       "couchbase":         "ignoreFieldOrder",
+       "marklogic_xml":     "pending",
+       "marklogic_json":    "pending",
+       "mimir":             "ignoreFieldOrder"
+    },
+    "query": "SELECT A_Name AS Game, B_Released AS ReleaseDate, C_Recommendations AS Reviews, D_Metacritic AS Score, PriceInitial AS Price FROM steamgames WHERE (IsAction = \"TRUE\") AND (A_Name <> \"\") AND (D_Metacritic >= 0) AND (C_Recommendations >= 0) ORDER BY D_Metacritic DESC, PriceInitial DESC, A_Name ASC LIMIT 10",
+    "predicate": "exactly",
+    "expected": [
+       { "Game":  "Grand Theft Auto V"           , "ReleaseDate": "Apr 13 2015", "Reviews": 136846, "Score":  96, "Price":  59.99 },
+       { "Game":  "BioShock(tm)"                 , "ReleaseDate": "Aug 21 2007", "Reviews":  16260, "Score":  96, "Price":  19.99 },
+       { "Game":  "Half-Life"                    , "ReleaseDate": "Nov 8 1998" , "Reviews":  12486, "Score":  96, "Price":   9.99 },
+       { "Game":  "Half-Life 2"                  , "ReleaseDate": "Nov 16 2004", "Reviews":  35792, "Score":  96, "Price":   9.99 },
+       { "Game":  "Portal 2"                     , "ReleaseDate": "Apr 18 2011", "Reviews":  73144, "Score":  95, "Price":  19.99 },
+       { "Game":  "BioShock Infinite"            , "ReleaseDate": "Mar 25 2013", "Reviews":  55512, "Score":  94, "Price":  29.99 },
+       { "Game":  "Grand Theft Auto: Vice City"  , "ReleaseDate": "Jan 10 2011", "Reviews":   4866, "Score":  94, "Price":   9.99 },
+       { "Game":  "QUAKE"                        , "ReleaseDate": "Aug 3 2007" , "Reviews":   1266, "Score":  94, "Price":   4.99 },
+       { "Game":  "Company of Heroes"            , "ReleaseDate": "Jul 17 2007", "Reviews":   3856, "Score":  93, "Price":  19.99 },
+       { "Game":  "Grand Theft Auto: San Andreas", "ReleaseDate": "Jan 6 2011" , "Reviews":  14209, "Score":  93, "Price":  14.99 }
+    ]
+}

@@ -1,10 +1,6 @@
 {
     "name": "sort wildcard on expression",
-    "backends": {
-        "mongodb_2_6":       "ignoreResultOrder",
-        "mongodb_3_0":       "ignoreResultOrder",
-        "mongodb_read_only": "ignoreResultOrder"
-    },
+    "backends": {},
     "data": "largeZips.data",
     "query": "select * from largeZips order by pop/10 desc",
     "predicate": "initial",

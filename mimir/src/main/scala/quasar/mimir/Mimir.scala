@@ -35,7 +35,10 @@ import quasar.qscript.rewrites.{Optimize, Unicoalesce, Unirewrite}
 import quasar.blueeyes.json.{JNum, JValue}
 import quasar.precog.common.{ColumnRef, CPath, CPathField, CPathIndex, Path}
 import quasar.yggdrasil.TableModule
+import quasar.yggdrasil.TableModule.{DesiredSortOrder, SortAscending}
 import quasar.yggdrasil.bytecode.{JArrayFixedT, JType}
+
+import delorean._
 
 import fs2.{async, Stream}
 import fs2.async.mutable.{Queue, Signal}
@@ -45,14 +48,14 @@ import matryoshka._
 import matryoshka.implicits._
 import matryoshka.data._
 import matryoshka.patterns._
-import scalaz._, Scalaz._
-import scalaz.concurrent.Task
 
 import org.slf4s.Logging
 
 import pathy.Path._
 
-import delorean._
+import scalaz._, Scalaz._
+import scalaz.concurrent.Task
+import scalaz.Leibniz.===
 
 import scala.Predef.implicitly
 import scala.collection.immutable.{Map => ScalaMap}
@@ -63,17 +66,12 @@ import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 
-import quasar.yggdrasil.TableModule.{DesiredSortOrder, SortAscending}
-
-import scalaz.Leibniz.===
-
 object Mimir extends BackendModule with Logging with DefaultAnalyzeModule {
   import FileSystemError._
   import PathError._
   import Precog.startTask
 
-  type QS[T[_[_]]] =
-    MimirQScriptCP[T]
+  type QS[T[_[_]]] = MimirQScriptCP[T]
 
   implicit def qScriptToQScriptTotal[T[_[_]]]: Injectable.Aux[QSM[T, ?], QScriptTotal[T, ?]] =
     mimir.qScriptToQScriptTotal[T]
@@ -122,7 +120,8 @@ object Mimir extends BackendModule with Logging with DefaultAnalyzeModule {
       other.asInstanceOf[Repr.this.P.Table]
 
     // this is totally safe because `Precog` is final *and* `TransSpec` can't reference cake state.
-    def mergeTS1(other: or.P.trans.TransSpec1 forSome { val or: Repr }): Repr.this.P.trans.TransSpec1 =
+    def mergeTS1(other: or.P.trans.TransSpec1 forSome { val or: Repr })
+        : Repr.this.P.trans.TransSpec1 =
       other.asInstanceOf[Repr.this.P.trans.TransSpec1]
 
     def map(f: P.Table => P.Table): Repr.Aux[Repr.this.P.type] =
@@ -143,7 +142,8 @@ object Mimir extends BackendModule with Logging with DefaultAnalyzeModule {
         val lastSort: Option[SortState[P0.trans.TransSpec1]] = None
       }
 
-    def withSort(P0: Precog)(table0: P0.Table)(lastSort0: Option[SortState[P0.trans.TransSpec1]]): Repr.Aux[P0.type] =
+    def withSort(P0: Precog)(table0: P0.Table)(lastSort0: Option[SortState[P0.trans.TransSpec1]])
+        : Repr.Aux[P0.type] =
       new Repr {
         type P = P0.type
 
@@ -202,7 +202,8 @@ object Mimir extends BackendModule with Logging with DefaultAnalyzeModule {
     t.liftM[BackendDef.DefErrT]
   }
 
-  def needToSort(p: Precog)(oldSort: SortState[p.trans.TransSpec1], newSort: SortState[p.trans.TransSpec1]): Boolean = {
+  private def needToSort(p: Precog)(oldSort: SortState[p.trans.TransSpec1], newSort: SortState[p.trans.TransSpec1])
+      : Boolean = {
     (oldSort.orderings.length != newSort.orderings.length || oldSort.bucket != newSort.bucket) || {
       def requiresSort(oldOrdering: SortOrdering[p.trans.TransSpec1], newOrdering: SortOrdering[p.trans.TransSpec1]) = {
         (oldOrdering.sortKeys & newOrdering.sortKeys).isEmpty ||
@@ -218,7 +219,7 @@ object Mimir extends BackendModule with Logging with DefaultAnalyzeModule {
   }
 
   // sort by one dimension
-  def sortT[P0 <: Cake](c: Repr.Aux[P0])(
+  private def sortT[P0 <: Cake](c: Repr.Aux[P0])(
       table: c.P.Table,
       sortKey: c.P.trans.TransSpec1,
       sortOrder: DesiredSortOrder = SortAscending,
@@ -240,16 +241,15 @@ object Mimir extends BackendModule with Logging with DefaultAnalyzeModule {
 
   val Type = FileSystemType("mimir")
 
+  // M = Backend
+  // F[_] = MapFuncCore[T, ?]
+  // B = Repr
+  // A = SrcHole
+  // AlgebraM[M, CoEnv[A, F, ?], B] = AlgebraM[Backend, CoEnv[Hole, MapFuncCore[T, ?], ?], Repr]
+  // def interpretM[M[_], F[_], A, B](f: A => M[B], φ: AlgebraM[M, F, B]): AlgebraM[M, CoEnv[A, F, ?], B]
+  // f.cataM(interpretM)
   def plan[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT](
       cp: T[QSM[T, ?]]): Backend[Repr] = {
-
-// M = Backend
-// F[_] = MapFuncCore[T, ?]
-// B = Repr
-// A = SrcHole
-// AlgebraM[M, CoEnv[A, F, ?], B] = AlgebraM[Backend, CoEnv[Hole, MapFuncCore[T, ?], ?], Repr]
-//def interpretM[M[_], F[_], A, B](f: A => M[B], φ: AlgebraM[M, F, B]): AlgebraM[M, CoEnv[A, F, ?], B]
-// f.cataM(interpretM)
 
     def mapFuncPlanner[F[_]: Monad] = MapFuncPlanner[T, F, MapFunc[T, ?]]
 
@@ -453,7 +453,7 @@ object Mimir extends BackendModule with Logging with DefaultAnalyzeModule {
           }
         } yield Repr(src.P)(table)
 
-      case qscript.LeftShift(src, struct, idStatus, repair) =>
+      case qscript.LeftShift(src, struct, idStatus, _, repair) =>
         import src.P.trans._
 
         for {
@@ -716,14 +716,13 @@ object Mimir extends BackendModule with Logging with DefaultAnalyzeModule {
         val loaded: EitherT[M, FileSystemError, Repr] =
           for {
             precog <- cake[EitherT[M, FileSystemError, ?]]
-            apiKey <- precog.RootAPIKey.toTask.liftM[MT].liftM[EitherT[?[_], FileSystemError, ?]]
 
             repr <-
               Repr.meld[EitherT[M, FileSystemError, ?]](
                 new DepFn1[Cake, λ[`P <: Cake` => EitherT[M, FileSystemError, P#Table]]] {
                   def apply(P: Cake): EitherT[M, FileSystemError, P.Table] = {
                     val et =
-                      P.Table.constString(Set(pathStr)).load(apiKey, JType.JUniverseT).mapT(_.toTask)
+                      P.Table.constString(Set(pathStr)).load(JType.JUniverseT).mapT(_.toTask)
 
                     et.mapT(_.liftM[MT]) leftMap { err =>
                       val msg = err.messages.toList.reduce(_ + ";" + _)
@@ -765,7 +764,6 @@ object Mimir extends BackendModule with Logging with DefaultAnalyzeModule {
     cp.cataM(planQSM _)
   }
 
-  private def dirToPath(dir: ADir): Path = Path(pathy.Path.posixCodec.printPath(dir))
   private def fileToPath(file: AFile): Path = Path(pathy.Path.posixCodec.printPath(file))
 
   object QueryFileModule extends QueryFileModule {

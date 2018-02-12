@@ -79,6 +79,7 @@ object ReduceIndex {
   src: A,
   struct: FreeMap[T],
   idStatus: IdStatus,
+  shiftType: ShiftType,
   repair: JoinFunc[T])
     extends QScriptCore[T, A]
 
@@ -156,8 +157,8 @@ object QScriptCore {
       def apply[A](eq: Equal[A]) =
         Equal.equal {
           case (Map(a1, f1), Map(a2, f2)) => f1 ≟ f2 && eq.equal(a1, a2)
-          case (LeftShift(a1, s1, i1, r1), LeftShift(a2, s2, i2, r2)) =>
-            eq.equal(a1, a2) && s1 ≟ s2 && i1 ≟ i2 && r1 ≟ r2
+          case (LeftShift(a1, s1, i1, t1, r1), LeftShift(a2, s2, i2, t2, r2)) =>
+            eq.equal(a1, a2) && s1 ≟ s2 && i1 ≟ i2 && t1 ≟ t2 && r1 ≟ r2
           case (Reduce(a1, b1, f1, r1), Reduce(a2, b2, f2, r2)) =>
             b1 ≟ b2 && f1 ≟ f2 && r1 ≟ r2 && eq.equal(a1, a2)
           case (Sort(a1, b1, o1), Sort(a2, b2, o2)) =>
@@ -178,7 +179,7 @@ object QScriptCore {
         f: A => G[B]) =
         fa match {
           case Map(a, func)               => f(a) ∘ (Map[T, B](_, func))
-          case LeftShift(a, s, i, r)      => f(a) ∘ (LeftShift(_, s, i, r))
+          case LeftShift(a, s, i, t, r)   => f(a) ∘ (LeftShift(_, s, i, t, r))
           case Reduce(a, b, func, repair) => f(a) ∘ (Reduce(_, b, func, repair))
           case Sort(a, b, o)              => f(a) ∘ (Sort(_, b, o))
           case Union(a, l, r)             => f(a) ∘ (Union(_, l, r))
@@ -196,10 +197,11 @@ object QScriptCore {
           case Map(src, mf) => Cord("Map(") ++
             s.show(src) ++ Cord(", ") ++
             mf.show ++ Cord(")")
-          case LeftShift(src, struct, id, repair) => Cord("LeftShift(") ++
+          case LeftShift(src, struct, id, stpe, repair) => Cord("LeftShift(") ++
             s.show(src) ++ Cord(", ") ++
             struct.show ++ Cord(", ") ++
             id.show ++ Cord(", ") ++
+            stpe.show ++ Cord(", ") ++
             repair.show ++ Cord(")")
           case Reduce(a, b, red, rep) => Cord("Reduce(") ++
             s.show(a) ++ Cord(", ") ++
@@ -242,11 +244,12 @@ object QScriptCore {
               case Map(src, f) =>
                 NonTerminal("Map" :: nt, None,
                   RA.render(src) :: f.render :: Nil)
-              case LeftShift(src, struct, id, repair) =>
+              case LeftShift(src, struct, id, stpe, repair) =>
                 NonTerminal("LeftShift" :: nt, None,
                   RA.render(src) ::
                     nested("Struct", struct) ::
                     nested("IdStatus", id) ::
+                    nested("ShiftType", stpe) ::
                     nested("Repair", repair) ::
                     Nil)
               case Reduce(src, bucket, reducers, repair) =>

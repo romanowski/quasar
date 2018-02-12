@@ -2,10 +2,7 @@
     "name": "sort, project, and limit",
 
     "backends": {
-        "mimir":"ignoreFieldOrder",
-        "mongodb_2_6":       "ignoreResultOrder",
-        "mongodb_3_0":       "ignoreResultOrder",
-        "mongodb_read_only": "ignoreResultOrder"
+        "mimir":"ignoreFieldOrder"
     },
 
     "data": "zips.data",

@@ -28,7 +28,7 @@ class MoreBindOpsSpec extends Specification {
     "<<" >> {
       var state = true
       val t1: Task[Int] = Task.delay{state = true; 7}
-      val t2: Task[Unit]  = Task.delay(state = false)
+      val t2: Task[Unit]  = Task.delay{state = false}
       ((t1 << t2).unsafePerformSync must_=== 7) and (state must_=== false)
     }
   }

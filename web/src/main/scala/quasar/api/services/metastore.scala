@@ -21,11 +21,12 @@ import quasar.api._
 import quasar.db.DbConnectionConfig
 import quasar.fp.free._
 import quasar.main.{MainErrT, MetaStoreLocation}
+import quasar.metastore.MetaStore.{ShouldCopy, ShouldInitialize}
 
-import org.http4s.dsl._
-import org.http4s.argonaut._
 import argonaut.Json
 import argonaut.Argonaut._
+import org.http4s.dsl._
+import org.http4s.argonaut._
 import scalaz._, Scalaz._
 import scalaz.concurrent.Task
 
@@ -37,14 +38,18 @@ object metastore {
       case GET -> Root =>
         respond(meta.get.map(_.asJson(DbConnectionConfig.secureEncodeJson)))
       case req @ PUT -> Root =>
-        val initialize = req.params.keys.toList.contains("initialize")
+        val initialize: ShouldInitialize = ShouldInitialize(req.params.keys.toList.contains("initialize"))
+        val copy: ShouldCopy = ShouldCopy(req.params.keys.toList.contains("copy"))
         respondT((for {
           connConfigJson <- lift(req.as[Json]).into[S].liftM[MainErrT]
           connConfig     <- EitherT.fromEither(connConfigJson.as[DbConnectionConfig].result.leftMap(_._1).point[Free[S, ?]])
-          _              <- EitherT(meta.set(connConfig, initialize))
+          _              <- EitherT(meta.set(connConfig, initialize, copy))
           newUrl         =  DbConnectionConfig.connectionInfo(connConfig).url
-          initializedStr =  if (initialize) "newly initialized " else ""
-        } yield s"Now using ${initializedStr}metastore located at $newUrl").leftMap(msg => ApiError.fromMsg_(BadRequest withReason "UninitializedMetastore", msg)))
+          initializedStr =  if (initialize.v) "newly initialized " else ""
+          copiedStr      =  if (copy.v) "Metastore copied. " else ""
+        } yield {
+          s"${copiedStr}Now using ${initializedStr}metastore located at $newUrl"}
+          ).leftMap(msg => ApiError.fromMsg_(BadRequest withReason "UninitializedMetastore", msg)))
     }
   }
 }

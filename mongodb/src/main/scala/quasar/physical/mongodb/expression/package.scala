@@ -27,17 +27,15 @@ import scalaz._, Scalaz._
 
 package object expression {
 
-  /** The type for expressions targeting MongoDB 2.6 specifically. */
-  type Expr2_6[A] = ExprOpCoreF[A]
-  /** The type for expressions targeting MongoDB 3.0 specifically. */
-  type Expr3_0[A] = Coproduct[ExprOp3_0F, ExprOpCoreF, A]
   /** The type for expressions targeting MongoDB 3.2 specifically. */
-  type Expr3_2[A] = Coproduct[ExprOp3_2F, Expr3_0, A]
+  type Expr3_2[A] = ExprOpCoreF[A]
   /** The type for expressions targeting MongoDB 3.4 specifically. */
   type Expr3_4[A] = Coproduct[ExprOp3_4F, Expr3_2, A]
+  /** The type for expressions targeting MongoDB 3.4.4 specifically. */
+  type Expr3_4_4[A] = Coproduct[ExprOp3_4_4F, Expr3_4, A]
 
   /** The type for expressions supporting the most advanced capabilities. */
-  type ExprOp[A] = Expr3_4[A]
+  type ExprOp[A] = Expr3_4_4[A]
 
   val fixExprOp =
     new ExprOpCoreF.fixpoint[Fix[ExprOp], ExprOp](_.embed)

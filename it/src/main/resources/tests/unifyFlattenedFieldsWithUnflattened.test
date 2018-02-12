@@ -2,10 +2,7 @@
     "name": "unify flattened fields with unflattened field",
     "backends": {
         "couchbase": "pending",
-        "mimir": "ignoreFieldOrder",
-        "mongodb_2_6": "ignoreResultOrder",
-        "mongodb_3_0": "ignoreResultOrder",
-        "mongodb_read_only": "ignoreResultOrder"
+        "mimir": "ignoreFieldOrder"
     },
     "data": "zips.data",
     "query": "select `_id` as zip, loc[*] from zips order by loc[*] limit 10",

@@ -35,9 +35,7 @@ trait DAGRewriterSpecs[M[+_]] extends EvaluatorSpecification[M] {
 
   "DAG rewriting" should {
     "compute identities given a relative path" in {
-      val line = Line(1, 1, "")
-
-      val input = dag.AbsoluteLoad(Const(CString("/numbers"))(line))(line)
+      val input = dag.AbsoluteLoad(Const(CString("/numbers")))
 
       val ctx = defaultEvaluationContext
       val result = fullRewriteDAG(true, ctx)(input)
@@ -51,20 +49,18 @@ trait DAGRewriterSpecs[M[+_]] extends EvaluatorSpecification[M] {
        * foo.a + count(foo) + foo.c
        */
 
-      val line = Line(1, 1, "")
-
-      val t1 = dag.AbsoluteLoad(Const(CString("/hom/pairs"))(line))(line)
+      val t1 = dag.AbsoluteLoad(Const(CString("/hom/pairs")))
 
       val input =
         Join(Add, IdentitySort,
           Join(Add, Cross(None),
             Join(DerefObject, Cross(None),
               t1,
-              Const(CString("first"))(line))(line),
-            dag.Reduce(Count, t1)(line))(line),
+              Const(CString("first"))),
+            dag.Reduce(Count, t1)),
           Join(DerefObject, Cross(None),
             t1,
-            Const(CString("second"))(line))(line))(line)
+            Const(CString("second"))))
 
       val ctx = defaultEvaluationContext
       val optimize = true

@@ -1,0 +1,20 @@
+{
+    "name": "games_step4",
+    "data": "steamgames.data",
+    "backends": {
+       "couchbase":         "ignoreFieldOrder",
+       "marklogic_json":    "ignoreFieldOrder",
+       "mimir":             "ignoreFieldOrder"
+    },
+    "query": "temp0 := SELECT A_Name AS Game, B_Released AS ReleaseDate, C_Recommendations AS Reviews, D_Metacritic AS Score, PriceInitial AS Price FROM steamgames WHERE (IsAction = \"TRUE\") AND (A_Name <> \"\") AND (D_Metacritic >= 0) AND (C_Recommendations >= 0) ORDER BY D_Metacritic DESC, PriceInitial DESC, A_Name ASC;
+     SELECT Game AS dimension, SUM(Score) AS measure1, null AS size, SUM(Price) AS measure2, null AS series FROM (temp0) AS temp1 GROUP BY Game ORDER BY measure1 desc, measure2 asc LIMIT 5
+    ",
+    "predicate": "exactly",
+    "expected": [
+      { "dimension": "F.E.A.R."                             , "measure1":  440, "size": null, "measure2":  49.95, "series": null},
+      { "dimension": "SiN Episodes: Emergence"              , "measure1":  375, "size": null, "measure2":  49.95, "series": null},
+      { "dimension": "BRINK"                                , "measure1":  350, "size": null, "measure2":  39.95, "series": null},
+      { "dimension": "Call of Duty(r): Modern Warfare(r) 2" , "measure1":  258, "size": null, "measure2":  59.97, "series": null},
+      { "dimension": "Fallout: New Vegas"                   , "measure1":  252, "size": null, "measure2":  29.97, "series": null}
+    ]
+}

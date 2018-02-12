@@ -201,7 +201,7 @@ object InMemory {
                            (f: Vector[Data] => InMemoryFs[A])
                            : InMemoryFs[(PhaseResults, FileSystemError \/ A)] = {
       phaseResults(lp)
-        .tuple(simpleEvaluation(lp).flatMap(f andThen EitherT.right[InMemoryFs, FileSystemError, A]).run)
+        .tuple(simpleEvaluation(lp).flatMap(f andThen EitherT.rightT[InMemoryFs, FileSystemError, A]).run)
     }
 
     private def phaseResults(lp: Fix[LogicalPlan]): InMemoryFs[PhaseResults] =

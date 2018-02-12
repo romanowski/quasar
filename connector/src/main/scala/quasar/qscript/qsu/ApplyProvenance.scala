@@ -133,7 +133,7 @@ final class ApplyProvenance[T[_[_]]: BirecursiveT: EqualT: ShowT] private () ext
         case MultiLeftShift(src, shifts, _) =>
           val tid = IdAccess.identity[dims.D](g.root)
           compute1[F](g, src) { sdims =>
-            shifts.foldRight(sdims) {
+            IList.fromList(shifts).sortBy(_._3).foldRight(sdims) {
               case (shift, prv) => shift._3 match {
                 case Rotation.ShiftMap   | Rotation.ShiftArray   => dims.lshift(tid, prv)
                 case Rotation.FlattenMap | Rotation.FlattenArray => dims.flatten(tid, prv)

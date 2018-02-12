@@ -18,11 +18,11 @@ package quasar.blueeyes.json.serialization
 
 import quasar.blueeyes.json.{JArray, JObject, JValue, JUndefined, JNum, JString, JNull, JBool}
 import quasar.blueeyes.json.serialization.Extractor._
-import quasar.precog.CTag
 
 import scalaz._, Scalaz._
 
 import java.time.{Instant, LocalDateTime, ZoneId}
+import scala.reflect.ClassTag
 
 /** Extractors for all basic types.
   */
@@ -151,7 +151,7 @@ trait DefaultExtractors {
     }
   }
 
-  implicit def ArrayExtractor[T](implicit m: CTag[T], elementExtractor: Extractor[T]): Extractor[Array[T]] = new Extractor[Array[T]] {
+  implicit def ArrayExtractor[T](implicit m: ClassTag[T], elementExtractor: Extractor[T]): Extractor[Array[T]] = new Extractor[Array[T]] {
     def validated(jvalue: JValue) = jvalue match {
       case JArray(values) => values.map(elementExtractor.validated _).sequence[VE, T].map(_.toArray)
       case _              => invalidv("Expected JArray but found: " + jvalue)

@@ -1,0 +1,18 @@
+{
+  "name": "[qa_s01] select fields",
+
+  "data": "basic.data",
+
+  "query": "select num, name from basic",
+
+  "predicate": "exactly",
+  
+  "ignoreResultOrder": true,
+
+  "ignoreFieldOrder": true,
+
+  "expected": [
+    {"num": 4, "name": {"first": "John", "last": "Smith"}},
+    {"num": 42, "name": {"first": "Janina", "last": "Kowalska"}}
+  ]
+}

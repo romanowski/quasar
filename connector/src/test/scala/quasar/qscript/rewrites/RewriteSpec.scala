@@ -103,6 +103,7 @@ class RewriteSpec extends quasar.Qspec with CompilerHelpers with QScriptHelpers 
             func.Constant(json.bool(true))),
           func.Hole,
           ExcludeId,
+          ShiftType.Array,
           func.RightSide).unFix
 
       Coalesce[Fix, QScriptCore, QScriptCore].coalesceQC(idPrism).apply(exp) must
@@ -111,6 +112,7 @@ class RewriteSpec extends quasar.Qspec with CompilerHelpers with QScriptHelpers 
           fix.Unreferenced,
           func.Constant(json.bool(true)),
           ExcludeId,
+          ShiftType.Array,
           func.RightSide).unFix.some)
     }
 
@@ -200,6 +202,7 @@ class RewriteSpec extends quasar.Qspec with CompilerHelpers with QScriptHelpers 
               func.ProjectKey(func.Hole, func.Constant(json.str("city")))),
             func.Hole,
             IncludeId,
+            ShiftType.Array,
             func.ConcatArrays(
               func.MakeArray(func.LeftSide),
               func.MakeArray(func.RightSide))),
@@ -221,6 +224,7 @@ class RewriteSpec extends quasar.Qspec with CompilerHelpers with QScriptHelpers 
           fix.LeftShift(_,
             func.ProjectKey(func.Hole, func.Constant(json.str("city"))),
             ExcludeId,
+            ShiftType.Array,
             func.ProjectKey(func.RightSide, func.Constant(json.str("name"))))))
     }
 
@@ -256,6 +260,7 @@ class RewriteSpec extends quasar.Qspec with CompilerHelpers with QScriptHelpers 
               free.Hole,
               func.Hole,
               IncludeId,
+              ShiftType.Array,
               func.ConcatArrays(
                 func.MakeArray(func.LeftSide),
                 func.MakeArray(func.RightSide))),
@@ -280,6 +285,7 @@ class RewriteSpec extends quasar.Qspec with CompilerHelpers with QScriptHelpers 
             fix.Root,
             func.Hole,
             IncludeId,
+            ShiftType.Array,
             func.ConcatArrays(
               func.Constant(json.arr(List(json.str("name")))),
               func.MakeArray(
@@ -402,6 +408,7 @@ class RewriteSpec extends quasar.Qspec with CompilerHelpers with QScriptHelpers 
           fix.ShiftedRead[AFile](sampleFile, IncludeId),
           func.ProjectKeyS(func.ProjectIndexI(func.Hole, 1), "foo"),
           ExcludeId,
+          ShiftType.Map,
           func.ConcatMaps(
             func.MakeMapS("a", func.ProjectKeyS(func.ProjectIndexI(func.LeftSide, 1), "quux")),
             func.MakeMapS("b", func.RightSide)))
@@ -411,6 +418,7 @@ class RewriteSpec extends quasar.Qspec with CompilerHelpers with QScriptHelpers 
           fix.ShiftedRead[AFile](sampleFile, ExcludeId),
           func.ProjectKeyS(func.Hole, "foo"),
           ExcludeId,
+          ShiftType.Map,
           func.ConcatMaps(
             func.MakeMapS("a", func.ProjectKeyS(func.LeftSide, "quux")),
             func.MakeMapS("b", func.RightSide)))
@@ -427,6 +435,7 @@ class RewriteSpec extends quasar.Qspec with CompilerHelpers with QScriptHelpers 
             func.MakeArray(func.Add(func.Hole, func.Constant(json.int(3))))),
           func.Hole,
           ExcludeId,
+          ShiftType.Array,
           func.ConcatMaps(
             func.MakeMap(func.Constant(json.str("right")), func.RightSide),
             func.MakeMap(func.Constant(json.str("left")), func.LeftSide)))
@@ -450,6 +459,7 @@ class RewriteSpec extends quasar.Qspec with CompilerHelpers with QScriptHelpers 
             func.Add(func.Hole, func.Constant(json.int(3)))),
           func.MakeArray(func.Subtract(func.Hole, func.Constant(json.int(5)))),
           ExcludeId,
+          ShiftType.Array,
           func.ConcatMaps(
             func.MakeMap(func.Constant(json.str("right")), func.RightSide),
             func.MakeMap(func.Constant(json.str("left")), func.LeftSide)))

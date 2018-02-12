@@ -93,19 +93,16 @@ trait Rdbms extends BackendModule with RdbmsReadFile with RdbmsWriteFile with Rd
   def parseConfig(uri: ConnectionUri): DefErrT[Task, Config] =
     EitherT(Task.delay(parseConnectionUri(uri).map(Config.apply)))
 
-  def transactor(cfg: Config): Task[HikariTransactor[Task]] = {
-    HikariTransactor[Task](
+  def compile(cfg: Config): DefErrT[Task, (M ~> Task, Task[Unit])] = {
+    val xa = HikariTransactor[Task](
       cfg.connInfo.driverClassName,
       cfg.connInfo.url,
       cfg.connInfo.userName,
       cfg.connInfo.password.getOrElse("")
     )
-  }
-
-  def compile(cfg: Config): DefErrT[Task, (M ~> Task, Task[Unit])] = {
-    val xa = transactor(cfg)
-    val close = xa.flatMap(_.configure(_.close()))
-    (interp(xa) ∘ (i => (foldMapNT[Eff, Task](i), close))).liftM[DefErrT]
+    (interp(xa) ∘ {
+      case (i, close) => (foldMapNT[Eff, Task](i), close)
+    }).liftM[DefErrT]
   }
 
   lazy val MR                   = MonadReader_[Backend, Config]

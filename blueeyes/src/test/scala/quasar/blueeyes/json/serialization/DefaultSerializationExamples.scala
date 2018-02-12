@@ -21,6 +21,8 @@ package serialization
 import quasar.precog._, TestSupport._
 import DefaultSerialization._
 
+import scala.reflect.ClassTag
+
 class DefaultSerializationExamplesSpec extends Specification {
   "Primitives can be extracted from strings" in {
     IntExtractor(JString("12")) mustEqual 12
@@ -64,6 +66,6 @@ class DefaultSerializationExamplesSpec extends Specification {
 
     val s = ArrayDecomposer(IntDecomposer).decompose(l)
 
-    ArrayExtractor(ctag[Int], IntExtractor).extract(s).toList mustEqual l.toList
+    ArrayExtractor(implicitly[ClassTag[Int]], IntExtractor).extract(s).toList mustEqual l.toList
   }
 }

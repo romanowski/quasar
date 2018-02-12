@@ -17,13 +17,12 @@
 package quasar.physical.rdbms.model
 
 import slamdata.Predef._
-import quasar.Data
+import quasar.{Data, Type}
 import quasar.fs.FileSystemError
 import quasar.fs.FileSystemError._
 
 import scala.collection.immutable.TreeSet
 import scala.math.Ordering
-
 import scalaz._
 import Scalaz._
 
@@ -149,22 +148,24 @@ object TableModel {
     }
   }
 
-  def simpleColumnType(data: Data): ColumnType = {
+  def simpleColumnType(data: Type): ColumnType = {
+    import quasar.{Type => t}
     data match {
-      case Data.Null    => NullCol
-      case Data.Str(_)  => StringCol
-      case Data.Int(_)  => IntCol
-      case Data.Bool(_) => BoolCol
-      case Data.Dec(_)  => DecCol
-      case _            => NullCol // TODO support all types
+      case t.Null    => NullCol
+      case t.Str     => StringCol
+      case t.Int     => IntCol
+      case t.Bool    => BoolCol
+      case t.Dec     => DecCol
+      case _         => NullCol // TODO support all types
     }
   }
 
-  def columnType(data: Data): ColumnType = {
-    data match {
-      case Data.Obj(_) => JsonCol
-      case Data.Arr(_) => JsonCol
-      case _           => simpleColumnType(data)
+  def columnType(dataType: Type): ColumnType = {
+    import quasar.{Type => t}
+    dataType match {
+      case t.Arr(_)    => JsonCol
+      case t.Obj(_, _) => JsonCol
+      case _           => simpleColumnType(dataType)
     }
   }
 
@@ -172,7 +173,7 @@ object TableModel {
     row match {
       case Data.Obj(fields) =>
         ColumnarTable.fromColumns(fields.map {
-          case (label, value) => ColumnDesc(label, columnType(value))
+          case (label, value) => ColumnDesc(label, columnType(value.dataType))
         }.toList)
       case _ => JsonTable
     }

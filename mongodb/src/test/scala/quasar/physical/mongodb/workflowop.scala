@@ -907,16 +907,16 @@ class WorkflowSpec extends quasar.Qspec with TreeMatchers {
           |├─ $ReadF(db; foo)
           |├─ $MapF
           |│  ├─ JavaScript(function (key) {})
-          |│  ╰─ Scope(Map())
+          |│  ╰─ Scope(ListMap())
           |├─ $ProjectF
           |│  ├─ Name("bar" -> "$baz")
           |│  ╰─ IncludeId
           |├─ $FlatMapF
           |│  ├─ JavaScript(function (key) {})
-          |│  ╰─ Scope(Map())
+          |│  ╰─ Scope(ListMap())
           |╰─ $ReduceF
           |   ├─ JavaScript(function (key, values) { return values[1] })
-          |   ╰─ Scope(Map())""".stripMargin
+          |   ╰─ Scope(ListMap())""".stripMargin
     }
 
     "render unchained" in {
@@ -941,10 +941,10 @@ class WorkflowSpec extends quasar.Qspec with TreeMatchers {
         |   ├─ $ReadF(db; foo)
         |   ├─ $MapF
         |   │  ├─ JavaScript(function (key) {})
-        |   │  ╰─ Scope(Map())
+        |   │  ╰─ Scope(ListMap())
         |   ╰─ $ReduceF
         |      ├─ JavaScript(function (key, values) { return values[0] })
-        |      ╰─ Scope(Map())""".stripMargin
+        |      ╰─ Scope(ListMap())""".stripMargin
     }
   }
 }

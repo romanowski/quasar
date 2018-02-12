@@ -1,0 +1,24 @@
+{
+    "name": "[qa_s07] select fields from both sides of join",
+
+    "backends": {
+        "couchbase":      "timeout",
+        "marklogic_json": "timeout",
+        "marklogic_xml":  "timeout",
+        "mimir":          "ignoreFieldOrder",
+	"postgres":       "ignoreFieldOrder"
+    },
+
+    "data": ["leftData.data", "rightData.data"],
+
+    "query": "select l.b, r.login from leftData as l inner join rightData as r on l.a = r.a",
+
+    "predicate": "exactly",
+    "ignoreResultOrder": true,
+    "expected": [
+       {"b": 10, "login": "mike" },
+       {"b": 10, "login": "john" },
+       {"b": 20, "login": "kate" },
+       {"b": 20, "login": "paul" }
+    ]
+}

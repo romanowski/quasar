@@ -37,7 +37,7 @@ object ApiErrorEntityDecoder {
         }
 
       case Request(_, _, _, _, _, _) =>
-        EitherT.left(MalformedMessageBodyFailure("ApiError is only decodable from a Response.").point[Task])
+        EitherT.leftT(MalformedMessageBodyFailure("ApiError is only decodable from a Response.").point[Task])
     }
 
   private def fromJson(status: Status, hc: HCursor): DecodeResult[ApiError] =

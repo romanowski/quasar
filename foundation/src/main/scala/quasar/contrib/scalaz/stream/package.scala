@@ -26,7 +26,7 @@ package object stream {
 
   implicit class AugmentedProcess[M[_], A](p: Process[M, A]) {
     def runLogCatch(implicit monad: Monad[M]): M[Throwable \/ Vector[A]] = {
-      val right = λ[M ~> EitherT[M, Throwable, ?]](EitherT.right(_))
+      val right = λ[M ~> EitherT[M, Throwable, ?]](EitherT.rightT(_))
       p.translate(right).runLog.run
     }
   }

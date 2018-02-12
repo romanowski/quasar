@@ -65,7 +65,7 @@ object Cost {
         case Sort((card, cost), bucket, orders) => (card + cost).point[M]
         case Filter((card, cost), f) => (card + cost).point[M]
         case Subset((card, cost), from, sel, count) => (card + cost).point[M]
-        case LeftShift((card, cost), struct, id, repair) => (card + cost).point[M]
+        case LeftShift((card, cost), struct, id, stpe, repair) => (card + cost).point[M]
         case Union((card, cost), lBranch, rBranch) => {
           val compileCardinality = Cardinality[QScriptTotal[T, ?]].calculate(pathCard)
           val compileCost = Cost[QScriptTotal[T, ?]].evaluate(pathCard)

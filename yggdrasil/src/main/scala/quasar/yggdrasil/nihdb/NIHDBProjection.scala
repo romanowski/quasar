@@ -21,7 +21,6 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.control.NonFatal
 
 import quasar.precog.common._
-import quasar.precog.common.security.Authorities
 import quasar.niflheim._
 import quasar.yggdrasil._
 import quasar.yggdrasil.table.Slice
@@ -30,14 +29,14 @@ import org.slf4s.Logging
 
 import scalaz.Monad
 
-final class NIHDBProjection(snapshot: NIHDBSnapshot, val authorities: Authorities, projectionId: Int) extends ProjectionLike[Future, Slice] with Logging {
+final class NIHDBProjection(snapshot: NIHDBSnapshot, projectionId: Int) extends ProjectionLike[Future, Slice] with Logging {
   type Key = Long
 
   private[this] val readers = snapshot.readers
 
   val length = readers.map(_.length.toLong).sum
 
-  override def toString = "NIHDBProjection(id = %d, len = %d, authorities = %s)".format(projectionId, length, authorities)
+  override def toString = "NIHDBProjection(id = %d, len = %d)".format(projectionId, length)
 
   def structure(implicit M: Monad[Future]) = M.point(readers.flatMap(_.structure)(collection.breakOut): Set[ColumnRef])
 
@@ -48,18 +47,6 @@ final class NIHDBProjection(snapshot: NIHDBSnapshot, val authorities: Authoritie
       case Block(_, segments, _) =>
         val slice = SegmentsWrapper(segments, projectionId, index)
         BlockProjectionData(index, index, slice)
-    }
-  }
-
-  def reduce[A](reduction: Reduction[A], path: CPath): Map[CType, A] = {
-    readers.foldLeft(Map.empty[CType, A]) { (acc, reader) =>
-      reader.snapshot(Some(Set(path))).segments.foldLeft(acc) { (acc, segment) =>
-        reduction.reduce(segment, None) map { a =>
-          val key = segment.ctype
-          val value = acc.get(key).map(reduction.semigroup.append(_, a)).getOrElse(a)
-          acc + (key -> value)
-        } getOrElse acc
-      }
     }
   }
 
@@ -83,6 +70,6 @@ final class NIHDBProjection(snapshot: NIHDBSnapshot, val authorities: Authoritie
 
 object NIHDBProjection {
   def wrap(nihdb: NIHDB): Future[NIHDBProjection] = nihdb.getSnapshot map { snap =>
-    new NIHDBProjection(snap, nihdb.authorities, nihdb.projectionId)
+    new NIHDBProjection(snap, nihdb.projectionId)
   }
 }

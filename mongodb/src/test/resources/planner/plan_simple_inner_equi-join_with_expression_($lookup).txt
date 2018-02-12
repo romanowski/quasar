@@ -21,16 +21,7 @@ Chain
 │     ╰─ Expr($0 -> Eq(Bool(true)))
 ├─ $ProjectF
 │  ├─ Name("left" -> "$src")
-│  ├─ Name("0" -> {
-│  │       "$cond": [
-│  │         {
-│  │           "$and": [
-│  │             { "$lte": [{ "$literal": {  } }, "$src"] },
-│  │             { "$lt": ["$src", { "$literal": [] }] }]
-│  │         },
-│  │         { "$toLower": "$src._id" },
-│  │         { "$literal": undefined }]
-│  │     })
+│  ├─ Name("0" -> { "$toLower": "$src._id" })
 │  ╰─ ExcludeId
 ├─ $LookupF(from smallZips with (this).0 = (that)._id as right)
 ├─ $ProjectF
@@ -39,50 +30,6 @@ Chain
 │  ╰─ ExcludeId
 ├─ $UnwindF(DocField(BsonField.Name("right")))
 ╰─ $ProjectF
-   ├─ Name("city" -> {
-   │       "$cond": [
-   │         {
-   │           "$and": [
-   │             {
-   │               "$lte": [
-   │                 { "$literal": {  } },
-   │                 {
-   │                   "$cond": [
-   │                     {
-   │                       "$and": [
-   │                         { "$lte": [{ "$literal": {  } }, "$left"] },
-   │                         { "$lt": ["$left", { "$literal": [] }] }]
-   │                     },
-   │                     "$left",
-   │                     { "$literal": undefined }]
-   │                 }]
-   │             },
-   │             {
-   │               "$lt": [
-   │                 {
-   │                   "$cond": [
-   │                     {
-   │                       "$and": [
-   │                         { "$lte": [{ "$literal": {  } }, "$left"] },
-   │                         { "$lt": ["$left", { "$literal": [] }] }]
-   │                     },
-   │                     "$left",
-   │                     { "$literal": undefined }]
-   │                 },
-   │                 { "$literal": [] }]
-   │             }]
-   │         },
-   │         {
-   │           "$cond": [
-   │             {
-   │               "$and": [
-   │                 { "$lte": [{ "$literal": {  } }, "$left"] },
-   │                 { "$lt": ["$left", { "$literal": [] }] }]
-   │             },
-   │             "$left.city",
-   │             { "$literal": undefined }]
-   │         },
-   │         { "$literal": undefined }]
-   │     })
+   ├─ Name("city" -> "$left.city")
    ├─ Name("state" -> "$right.state")
    ╰─ ExcludeId

@@ -60,7 +60,7 @@ sealed abstract class NameGeneratorInstances extends NameGeneratorInstances0 {
 sealed abstract class NameGeneratorInstances0 {
   implicit def eitherTNameGenerator[F[_]: NameGenerator : Functor, A]: NameGenerator[EitherT[F, A, ?]] =
     new NameGenerator[EitherT[F, A, ?]] {
-      def freshName = EitherT.right(NameGenerator[F].freshName)
+      def freshName = EitherT.rightT(NameGenerator[F].freshName)
     }
 
   implicit def readerTNameGenerator[F[_]: NameGenerator, A]: NameGenerator[ReaderT[F, A, ?]] =

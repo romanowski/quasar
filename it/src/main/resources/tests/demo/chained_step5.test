@@ -1,0 +1,16 @@
+{
+    "name": "chained_step5",
+    "data": "patients.data",
+    "backends": {
+       "couchbase":         "ignoreFieldOrder",
+       "marklogic_json":    "ignoreFieldOrder",
+       "mimir":             "ignoreFieldOrder"
+    },
+    "query": "temp0 := SELECT COUNT(*) AS cnt, gender FROM patients WHERE state = \"CO\" AND city = \"DENVER\" GROUP BY gender;
+   SELECT COUNT(*) AS count FROM (temp0) AS temp1
+",
+    "predicate": "exactly",
+    "expected": [
+          { "count": 2  }
+    ]
+}

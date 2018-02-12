@@ -62,8 +62,8 @@ object UnaryFunctions {
             s match {
               case Map(src, fm) =>
                 (f(fm)).map(Map(src, _))
-              case LeftShift(src, struct, id, repair) =>
-                (f(struct)).map(LeftShift(src, _, id, repair))
+              case LeftShift(src, struct, id, stpe, repair) =>
+                (f(struct)).map(LeftShift(src, _, id, stpe, repair))
               case Reduce(src, bucket, red, repair) =>
                 (bucket.traverse(f) |@| red.traverse(_.traverse(f)))(Reduce(src, _, _, repair))
               case Sort(src, bucket, order) =>

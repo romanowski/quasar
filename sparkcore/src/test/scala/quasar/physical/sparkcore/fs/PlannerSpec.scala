@@ -439,7 +439,7 @@ class PlannerSpec
           def struct: FreeMap = func.ProjectKeyS(func.Hole, "countries")
           def repair: JoinFunc = func.RightSide
 
-          val leftShift = quasar.qscript.LeftShift(src, struct, ExcludeId, repair)
+          val leftShift = quasar.qscript.LeftShift(src, struct, ExcludeId, ShiftType.Array, repair)
 
           val program: SparkState[Task, RDD[Data]] = compile(leftShift)
           program.eval(sc).run.map(result => result must beRightDisjunction.like{

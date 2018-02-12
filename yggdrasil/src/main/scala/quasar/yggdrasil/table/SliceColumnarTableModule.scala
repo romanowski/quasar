@@ -16,7 +16,7 @@
 
 package quasar.yggdrasil.table
 
-import quasar.precog.common._, security._
+import quasar.precog.common._
 import quasar.yggdrasil._
 import quasar.yggdrasil.bytecode._
 
@@ -27,7 +27,7 @@ trait SliceColumnarTableModule[M[+ _]] extends BlockStoreColumnarTableModule[M] 
   type TableCompanion <: SliceColumnarTableCompanion
 
   trait SliceColumnarTableCompanion extends BlockStoreColumnarTableCompanion {
-    def load(table: Table, apiKey: APIKey, tpe: JType): EitherT[M, vfs.ResourceError, Table] = EitherT.right {
+    def load(table: Table, tpe: JType): EitherT[M, vfs.ResourceError, Table] = EitherT.rightT {
       for {
         paths <- pathsM(table)
         projections <- paths.toList.traverse(Projection(_)).map(_.flatten)

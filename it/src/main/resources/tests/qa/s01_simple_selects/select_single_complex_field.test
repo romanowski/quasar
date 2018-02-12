@@ -1,0 +1,32 @@
+{
+  "name": "[qa_s01] select single complex field",
+
+  "backends": {
+          "couchbase":         "skip",
+          "marklogic_xml":     "skip",
+          "marklogic_json":    "skip",
+          "mimir":             "skip",
+          "mongodb_3_2":       "skip",
+          "mongodb_3_4":       "skip",
+          "mongodb_read_only": "skip",
+          "spark_hdfs":        "skip",
+          "spark_local":       "skip",
+          "spark_cassandra":   "skip"
+  },
+
+  "NB": "fix thix, it is postgres that needs to be skipped, expected changes and other connectors unskipped",
+
+  "data": "basic.data",
+
+  "query": "select name from basic",
+
+  "predicate": "exactly",
+  "ignoreResultOrder": true,
+
+  "ignoreFieldOrder": false,
+
+  "expected": [
+      {"name": {"first": "John", "last": "Smith"}},
+      {"name": {"first": "Janina", "last": "Kowalska"}}
+  ]
+}

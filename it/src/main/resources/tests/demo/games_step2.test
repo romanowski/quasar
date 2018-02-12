@@ -1,0 +1,15 @@
+{
+    "name": "games_step2",
+    "data": "steamgames.data",
+    "backends": {
+       "couchbase":         "ignoreFieldOrder",
+       "marklogic_json":    "pending",
+       "mimir":             "ignoreFieldOrder"
+    },
+    "query": "SELECT A_Name AS Game, B_Released AS ReleaseDate, C_Recommendations AS Reviews, D_Metacritic AS Score, PriceInitial AS Price FROM steamgames WHERE (IsAction = \"TRUE\") AND (LIKE(UPPER(A_Name), \"%\" || UPPER(\"Half-Life\") || \"%\", \"\\\\\")) AND (D_Metacritic >= 94) AND (C_Recommendations >= 12486) ORDER BY D_Metacritic DESC, PriceInitial DESC, A_Name ASC LIMIT 10",
+    "predicate": "exactly",
+    "expected": [
+       { "Game":  "Half-Life"  , "ReleaseDate": "Nov 8 1998" , "Reviews":  12486, "Score":  96, "Price":   9.99 },
+       { "Game":  "Half-Life 2", "ReleaseDate": "Nov 16 2004", "Reviews":  35792, "Score":  96, "Price":   9.99 }
+    ]
+}

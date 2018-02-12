@@ -20,6 +20,8 @@ import quasar.blueeyes._, json._
 import quasar.precog._
 import scalaz._, Scalaz._, Validation._
 
+import scala.reflect.ClassTag
+
 /** Extracts the value from a JSON object. You must implement either validated or extract.
   */
 trait Extractor[A] { self =>
@@ -102,10 +104,10 @@ object Extractor {
     def map[A, B](e: Extractor[A])(f: A => B): Extractor[B] = e map f
   }
 
-  def apply[A: CTag](f: PartialFunction[JValue, A]): Extractor[A] = new Extractor[A] {
+  def apply[A: ClassTag](f: PartialFunction[JValue, A]): Extractor[A] = new Extractor[A] {
     def validated(jvalue: JValue) = {
       if (f.isDefinedAt(jvalue)) Success(f(jvalue))
-      else Failure(Invalid("Extraction not defined from value " + jvalue + " to type " + implicitly[CTag[A]].erasure.getName))
+      else Failure(Invalid("Extraction not defined from value " + jvalue + " to type " + implicitly[ClassTag[A]].erasure.getName))
     }
   }
 }

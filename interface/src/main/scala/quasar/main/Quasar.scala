@@ -17,7 +17,7 @@
 package quasar.main
 
 import slamdata.Predef._
-import quasar.{QuasarError, QuasarErrT}
+import quasar.{QuasarErrT, QuasarError}
 import quasar.config.MetaStoreConfig
 import quasar.contrib.scalaz.catchable._
 import quasar.contrib.scalaz.concurrent._
@@ -31,9 +31,11 @@ import quasar.fs.{FileSystemError, PhysicalError}
 import quasar.fs.mount.{Mounting, MountingError}
 import quasar.fs.mount.cache.VCache
 import quasar.fs.mount.module.Module
+import quasar.metastore.MetaStore.ShouldInitialize
 import quasar.metastore._
 
-import scalaz._, Scalaz._
+import scalaz._
+import Scalaz._
 import scalaz.concurrent.Task
 
 /**
@@ -92,7 +94,7 @@ object Quasar {
 
   def initWithDbConfig(loadConfig: BackendConfig, db: DbConnectionConfig, persist: DbConnectionConfig => MainTask[Unit]): MainTask[Quasar] =
     for {
-      metastore <- MetaStore.connect(db, db.isInMemory, List(quasar.metastore.Schema.schema)).leftMap(_.message)
+      metastore <- MetaStore.connect(db, ShouldInitialize(db.isInMemory), List(quasar.metastore.Schema.schema), List(MetaStore.copy)).leftMap(_.message)
       metaRef   <- TaskRef(metastore).liftM[MainErrT]
       quasarFS  <- initWithMeta(loadConfig, metaRef, persist)
     } yield quasarFS.extendShutdown(metaRef.read.flatMap(_.shutdown))

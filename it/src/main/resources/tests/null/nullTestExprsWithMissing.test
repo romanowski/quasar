@@ -5,14 +5,12 @@
         "marklogic_json":    "pending",
         "marklogic_xml":     "pending",
         "mimir":"pendingIgnoreFieldOrder",
-        "mongodb_2_6":       "pendingIgnoreFieldOrder",
-        "mongodb_3_0":       "pendingIgnoreFieldOrder",
         "mongodb_3_2":       "pendingIgnoreFieldOrder",
         "mongodb_3_4":       "pendingIgnoreFieldOrder",
         "mongodb_read_only": "pendingIgnoreFieldOrder",
         "spark_hdfs":        "pending",
         "spark_local":       "pending",
-        "spark_cassandra":   "pending"	
+        "spark_cassandra":   "pending"
     },
     "data": "nullsWithMissing.data",
     "query": "select name,

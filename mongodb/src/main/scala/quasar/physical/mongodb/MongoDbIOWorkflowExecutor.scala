@@ -31,7 +31,7 @@ import scala.Predef.classOf
 import com.mongodb._
 import com.mongodb.async.client._
 import com.mongodb.client.model.CountOptions
-import org.bson.{BsonDocument, BsonValue}
+import org.bson.{BsonDocument, BsonNull, BsonValue}
 import scalaz._, Scalaz._
 
 /** Implementation class for a WorkflowExecutor in the `MongoDbIO` monad. */
@@ -66,8 +66,10 @@ private[mongodb] final class MongoDbIOWorkflowExecutor
     type DIT = DistinctIterable[BsonValue]
     type MIT = MongoIterable[BsonDocument]
 
+    // Fun fact: Even though BSON has a `null` type, the MongoDB java driver emits
+    // BSON nulls as Java `null`, because reasons.
     val wrapVal: BsonValue => BsonDocument =
-      new BsonDocument(field.asText, _)
+      bv => new BsonDocument(field.asText, Option(bv) getOrElse new BsonNull())
 
     val distinct0 =
       foldS(cfg.query)((q, dit: DIT) => dit.filter(q.bson))

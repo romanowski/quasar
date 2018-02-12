@@ -33,6 +33,9 @@ trait Queries {
   val fsMounts: Query0[(APath, FileSystemConfig)] =
     sql"SELECT path, type, connectionUri FROM Mounts WHERE (type != 'view' AND type != 'module')".query[(APath, FileSystemConfig)]
 
+  def mounts: Query0[PathedMountConfig]  =
+    sql"SELECT * FROM Mounts".query[PathedMountConfig]
+
   def mountsHavingPrefix(dir: ADir): Query0[(APath, MountType)] = {
     val patternChars = List("\\\\", "_", "%") // NB: Order is important here to avoid double-escaping
     val patternEscaped = patternChars.foldLeft(posixCodec.printPath(dir))((s, c) =>
@@ -49,16 +52,22 @@ trait Queries {
 
   def insertMount(path: APath, cfg: MountConfig): Update0 = {
     val mnt = Mount.fromMountConfig(cfg)
-    sql"""INSERT INTO Mounts (path, type, connectionUri)
-          VALUES (${refineType(path)}, ${mnt.`type`}, ${mnt.uri.value})
-          """.update
+    insertPathedMountConfig(PathedMountConfig(path, mnt.`type`, mnt.uri))
   }
+
+  def insertPathedMountConfig(pmc: PathedMountConfig): Update0 =
+    sql"""INSERT INTO Mounts (path, type, connectionUri)
+          VALUES (${refineType(pmc.path)}, ${pmc.mt}, ${pmc.uri})
+          """.update
 
   def deleteMount(path: APath): Update0 =
     sql"DELETE FROM Mounts where path = ${refineType(path)}".update
 
   val viewCachePaths: Query0[AFile] =
     sql"SELECT path FROM view_cache".query[AFile]
+
+  def viewCaches: Query0[PathedViewCache] =
+    sql"SELECT * FROM view_cache".query[PathedViewCache]
 
   def lookupViewCache(path: AFile): Query0[PathedViewCache] =
     sql"SELECT * FROM view_cache WHERE path = $path".query[PathedViewCache]

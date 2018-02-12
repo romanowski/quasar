@@ -1,0 +1,9 @@
+{ "_id": 1, "foo": "a" }
+{ "_id": 2, "foo": null }
+{ "_id": 3, "foo": "b" }
+{ "_id": 4, "foo": "c" }
+{ "_id": 5, "foo": "b" }
+{ "_id": 6, "foo": "c" }
+{ "_id": 7, "foo": null }
+{ "_id": 8, "foo": "a" }
+{ "_id": 9, "foo": "d" }

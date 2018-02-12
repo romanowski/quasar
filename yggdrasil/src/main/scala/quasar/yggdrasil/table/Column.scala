@@ -97,12 +97,15 @@ trait HomogeneousArrayColumn[@specialized(Boolean, Long, Double) A] extends Colu
 }
 
 object HomogeneousArrayColumn {
-  def apply[A: CValueType](f: Int =?> Array[A]): HomogeneousArrayColumn[A] = new HomogeneousArrayColumn[A] {
-    val tpe: CArrayType[A]    = implicitly
-    def isDefinedAt(row: Int) = f isDefinedAt row
-    def apply(row: Int)       = f(row)
-  }
-  def unapply[A](col: HomogeneousArrayColumn[A]): Option[CValueType[A]] = Some(col.tpe.elemType)
+  def apply[A: CValueType](f: PartialFunction[Int, Array[A]]): HomogeneousArrayColumn[A] =
+    new HomogeneousArrayColumn[A] {
+      val tpe: CArrayType[A]    = implicitly
+      def isDefinedAt(row: Int) = f isDefinedAt row
+      def apply(row: Int)       = f(row)
+    }
+
+  def unapply[A](col: HomogeneousArrayColumn[A]): Option[CValueType[A]] =
+    Some(col.tpe.elemType)
 
   @inline
   private[table] def select[A](col: HomogeneousArrayColumn[A], i: Int) = col match {

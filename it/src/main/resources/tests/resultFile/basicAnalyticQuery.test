@@ -4,8 +4,6 @@
         "couchbase":         "pendingIgnoreFieldOrder",
         "marklogic_json":    "ignoreFieldOrder",
         "mimir":             "ignoreFieldOrder",
-        "mongodb_2_6":       "skip",
-        "mongodb_3_0":       "skip",
         "mongodb_3_2":       "skip",
         "mongodb_3_4":       "skip",
         "mongodb_read_only": "skip",

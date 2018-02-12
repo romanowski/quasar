@@ -1,0 +1,17 @@
+{
+    "name": "chained_step6",
+    "data": "patients.data",
+    "backends": {
+       "couchbase":         "ignoreFieldOrder",
+       "marklogic_json":    "ignoreFieldOrder",
+       "mimir":             "pending"
+    },
+    "query": "temp0 := SELECT * FROM patients WHERE state = \"CO\" AND city = \"DENVER\" ORDER BY last_name ASC;
+    SELECT DISTINCT row.city AS city, row.gender AS gender, [row.last_name...] AS last_name, [row.first_name...] AS first_name, [row.height...] AS height, [row.age...] AS age FROM (temp0) AS row GROUP BY row.city, row.gender ORDER BY row.city ASC, row.gender ASC LIMIT 5
+    ",
+    "predicate": "exactly",
+    "expected": [
+       { "city": "DENVER", "gender": "female", "last_name":  ["Benjamin", "Brady", "Combs", "David", "Dawson", "Hess", "Hicks", "Holland", "Mccarty", "Mclaughlin", "Meza", "Mora", "Rojas", "Rollins", "Schaefer", "Schmidt", "Terry", "Vang"], "first_name": ["Lindsey", "Shayna", "Nola", "Rosia", "Beatrice", "Odell", "Regena", "Talia", "Candance", "Tasia", "Vida", "Concetta", "Barbra", "Polly", "Pok", "Reva", "Latoyia", "Leila"], "height": [59, 75, 59, 77, 76, 70, 59, 59, 70, 67, 70, 74, 71, 60, 72, 52, 62, 69], "age": [37, 26, 83, 53, 68, 89, 78, 85, 50, 66, 38, 53, 63, 38, 64, 77, 85, 36]},
+       { "city": "DENVER", "gender": "male", "last_name":  ["Brock", "Casey", "Dougherty", "Duran", "Herrera", "Jacobs", "Mccann", "Morris", "Obrien", "Olsen", "Roberts", "Schmitt", "Whitehead" ], "first_name": ["Dick", "Cornell", "Carlos", "Willian", "Bruno", "Rodrigo", "Raleigh", "Drew", "Lesley", "Noe", "Fidel", "Marlon", "Randolph"], "height": [74, 69, 61, 68, 57, 79, 59, 81, 69, 60, 70, 74, 54], "age": [39, 78, 37, 26, 38, 32, 44, 26, 84, 31, 30, 56, 68]}
+    ]
+}

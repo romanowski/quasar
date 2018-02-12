@@ -1,0 +1,3 @@
+{"name": {"first": {"word": "Paul"}}, "surname": "Smith", "age": {"nested": {"deeper": 33}}, "plusAge": 2, "aFlag": true, "nestedFlag": {"level1": {"level2": { "level3": true}}}}
+{"name": {"first": {"word": "John"}}, "surname": "Blahs", "age": {"nested": {"deeper": 28}}, "plusAge": 1, "aFlag": true, "nestedFlag": {"level1": {"level2": { "level3": false}}}}
+{"name": {"first": {"word": "Dick"}}, "surname": "Surnm", "age": {"nested": {"deeper": 11}}, "plusAge": 8, "aFlag": true, "nestedFlag": {"level1": {"level2": { "level3": true}}}}

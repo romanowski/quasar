@@ -19,7 +19,6 @@ package table
 
 import quasar.blueeyes._, json._
 import quasar.precog.common._
-import quasar.precog.common.security.APIKey
 
 import scalaz._, Scalaz._
 
@@ -90,7 +89,7 @@ trait BaseBlockStoreTestModule[M[+_]] extends ColumnarTableModuleTestSupport[M]
 
   trait BaseBlockStoreTestTableCompanion extends SliceColumnarTableCompanion
 
-  def userMetadataView(apiKey: APIKey) = sys.error("TODO")
+  def userMetadataView = sys.error("TODO")
 
   def compliesWithSchema(jv: JValue, ctype: CType): Boolean = (jv, ctype) match {
     case (_: JNum, CNum | CLong | CDouble) => true

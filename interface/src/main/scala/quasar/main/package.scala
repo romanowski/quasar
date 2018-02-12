@@ -540,6 +540,6 @@ package object main extends Logging {
               e => ConfigError.fileNotFound.getOption(e).cata(κ(none.right), e.shows.left),
               _.some.right))
       jʹ <- MetaStore.initializeOrUpdate(schema, tx, j).leftMap(_.message)
-      _  <- EitherT.right(jʹ.traverse_(ConfigOps.jsonToFile(_, cfgFile)))
+      _  <- EitherT.rightT(jʹ.traverse_(ConfigOps.jsonToFile(_, cfgFile)))
     } yield ()
 }

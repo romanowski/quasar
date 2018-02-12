@@ -153,7 +153,6 @@ trait PlannerWorkflowHelpers extends PlannerHelpers {
   }
 
   val WC = Inject[WorkflowOpCoreF, WorkflowF]
-  val WC32 = Inject[WorkflowOp3_2F, WorkflowF]
 
   def countAccumOps(wf: Workflow) = countOps(wf, { case WC($GroupF(_, _, _)) => true })
   def countUnwindOps(wf: Workflow) = countOps(wf, { case WC($UnwindF(_, _)) => true })
@@ -222,8 +221,8 @@ trait PlannerWorkflowHelpers extends PlannerHelpers {
     case WC($GeoNearF(s, _, _, _, _, _, _, _, _, _)) => GeoNearOp :: s
     case WC($OutF(s, _)) => OutOp :: s
     case WC($FoldLeftF(s1, s2)) => (FoldLeftOp :: s1) ++ s2.list.flatten
-    case WC32($LookupF(s, _, _, _, _)) => LookupOp :: s
-    case WC32($SampleF(s, _)) => SampleOp :: s
+    case WC($LookupF(s, _, _, _, _)) => LookupOp :: s
+    case WC($SampleF(s, _)) => SampleOp :: s
     case WC($MapF(s, _, _)) => MapOp :: s
     case WC($FlatMapF(s, _, _)) => FlatMapOp :: s
     case WC($SimpleMapF(s, _, _)) => SimpleMapOp :: s
@@ -244,8 +243,8 @@ trait PlannerWorkflowHelpers extends PlannerHelpers {
     case WC($GeoNearF(s, _, _, _, _, _, _, _, _, _)) => geoNearOp.node(s)
     case WC($OutF(s, _)) => outOp.node(s)
     case WC($FoldLeftF(s1, s2)) => foldLeftOp.node((s1 :: s2.list).toList : _*)
-    case WC32($LookupF(s, _, _, _, _)) => lookupOp.node(s)
-    case WC32($SampleF(s, _)) => sampleOp.node(s)
+    case WC($LookupF(s, _, _, _, _)) => lookupOp.node(s)
+    case WC($SampleF(s, _)) => sampleOp.node(s)
     case WC($MapF(s, _, _)) => mapOp.node(s)
     case WC($FlatMapF(s, _, _)) => flatMapOp.node(s)
     case WC($SimpleMapF(s, _, _)) => simpleMapOp.node(s)

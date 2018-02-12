@@ -2,10 +2,7 @@
   "name": "sort by JS expression with filter",
 
   "backends": {
-        "mimir":"ignoreFieldOrder",
-        "mongodb_2_6":       "ignoreResultOrder",
-        "mongodb_3_0":       "ignoreResultOrder",
-        "mongodb_read_only": "ignoreResultOrder"
+        "mimir":"ignoreFieldOrder"
   },
 
   "data": "zips.data",

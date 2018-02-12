@@ -25,6 +25,9 @@ import doobie.imports._
 import scalaz._, Scalaz._
 
 object Schema {
+  // NB: Changes to the schema should also be reflected in
+  // Metastore.copy, MetaStoreAccess, MetaStoreAccessSpec
+  // in order to maintain consistency of metastore copying.
   val schema = db.Schema[Int](
     MetaStoreAccess.tableExists("quasar_properties").flatMap {
       case true  => sql"SELECT schema_version FROM quasar_properties".query[Int].unique.map(_.some)

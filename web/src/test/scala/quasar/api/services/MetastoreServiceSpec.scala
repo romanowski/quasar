@@ -21,22 +21,37 @@ import quasar.api._
 import quasar.db.DbConnectionConfig
 import quasar.fp._
 import quasar.fp.free._
+import quasar.fs.FileSystemType
+import quasar.fs.mount.{ConnectionUri, MountConfig, MountType}
+import quasar.fs.mount.cache.ViewCache
 import quasar.main._
-import quasar.metastore.{MetaStore, MetaStoreFixture, Schema}
+import quasar.metastore.{MetaStore, MetaStoreAccess, MetaStoreFixture, PathedMountConfig, PathedViewCache, Schema}
+import quasar.metastore.MetaStore.ShouldInitialize
+import quasar.sql._
+import quasar.Variables
+
+import java.time.Instant
 
 import argonaut._, Argonaut._
+import doobie.imports._
 import org.http4s._, Status._
 import org.http4s.Method.PUT
 import org.http4s.syntax.service._
 import org.http4s.argonaut._
-import scalaz._, Scalaz._, concurrent.Task
+import pathy.Path.{file, rootDir}
+import scalaz._, Scalaz._
+import scalaz.concurrent.Task
 
 class MetastoreServiceSpec extends quasar.Qspec {
 
-  def service(persist: DbConnectionConfig => MainTask[Unit] = _ => ().point[MainTask]): Service[Request, Response] = {
-    val inter = Fixture.inMemFSWeb(persist = persist).unsafePerformSync
-    quasar.api.services.metastore.service[CoreEffIO].toHttpService(inter).orNotFound
-  }
+  def serviceWithMetaStore(persist: DbConnectionConfig => MainTask[Unit] = _ => ().point[MainTask]): (Service[Request, Response], MetaStore) =
+    (for {
+      ms    <- MetaStoreFixture.createNewTestMetastore()
+      inter <- Fixture.inMemFSWeb(persist = persist, metaRefT = TaskRef(ms))
+    } yield (quasar.api.services.metastore.service[CoreEffIO].toHttpService(inter).orNotFound, ms)).unsafePerformSync
+
+  def service(persist: DbConnectionConfig => MainTask[Unit] = _ => ().point[MainTask]): Service[Request, Response] =
+    serviceWithMetaStore(persist)._1
 
   "Metastore service" should {
     "return current metastore with password obscured" in {
@@ -60,7 +75,7 @@ class MetastoreServiceSpec extends quasar.Qspec {
     "succeed in changing metastore without initialize parameter if metastore is already initialized" in {
       val newConn = MetaStoreFixture.createNewTestMetaStoreConfig.unsafePerformSync
       // Connect to it beforehand to initialize it
-      val meta = MetaStore.connect(newConn, initializeOrUpdate = true, List(Schema.schema))
+      val meta = MetaStore.connect(newConn, initializeOrUpdate = ShouldInitialize(true), List(Schema.schema), Nil)
                    .run.unsafePerformSync.valueOr(e => scala.sys.error("Failed to initialize test metastore because: " + e.message))
       meta.shutdown.unsafePerformSync
       val req = Request(method = PUT).withBody(newConn.asJson).unsafePerformSync
@@ -77,11 +92,44 @@ class MetastoreServiceSpec extends quasar.Qspec {
       resp.as[String].unsafePerformSync must_=== s"Now using newly initialized metastore located at $expectedUrl"
       resp.status must_=== Ok
     }
+    "copy metastore" in {
+      val f = rootDir </> file("a")
+      val pathedMountConfig = PathedMountConfig(
+        rootDir </> file("mimir"),
+        MountType.fileSystemMount(FileSystemType("local")),
+        ConnectionUri("/tmp/local"))
+      val (svc, srcMeta) = serviceWithMetaStore()
+      val instant = Instant.ofEpochSecond(0)
+      val viewCache = ViewCache(
+        MountConfig.ViewConfig(sqlB"α", Variables.empty), None, None, 0, None, None,
+        0, instant, ViewCache.Status.Pending, None, f, None)
+      val pvc = PathedViewCache(f, viewCache)
+
+      (for {
+        dstConn <- MetaStoreFixture.createNewTestMetaStoreConfig
+        dstMeta <- MetaStore.connect(dstConn, initializeOrUpdate = ShouldInitialize(true), List(Schema.schema), Nil)
+                  .run.map(_.valueOr(e => scala.sys.error("Failed to initialize test metastore because: " + e.message)))
+        srcTrans = srcMeta.transactor
+        dstTrans = dstMeta.transactor
+        _     <- MetaStoreAccess.insertPathedMountConfig(pathedMountConfig).transact(srcTrans)
+        _     <- MetaStoreAccess.insertViewCache(pvc).transact(srcTrans)
+        req   <- Request(method = PUT, uri = Uri() +? ("initialize") +? ("copy")).withBody(dstConn.asJson)
+        resp  <- svc(req)
+        mnts  <- MetaStoreAccess.mounts.transact(dstTrans)
+        vmnts <- MetaStoreAccess.viewCaches.transact(dstTrans)
+        expectedUrl <- DbConnectionConfig.connectionInfo(dstConn).url.point[Task]
+      } yield {
+        resp.status must_=== Ok
+        mnts  must_=== List(pathedMountConfig)
+        vmnts must_=== List(pvc)
+        resp.as[String].unsafePerformSync must_=== s"Metastore copied. Now using newly initialized metastore located at $expectedUrl"
+      }).unsafePerformSync
+    }
     "persist change to metastore" in {
       val newConn = MetaStoreFixture.createNewTestMetaStoreConfig.unsafePerformSync
       val req = Request(method = PUT, uri = Uri().+?("initialize")).withBody(newConn.asJson).unsafePerformSync
       var persisted: DbConnectionConfig = null
-      def persist(db: DbConnectionConfig): MainTask[Unit] = Task.delay(persisted = db).liftM[MainErrT]
+      def persist(db: DbConnectionConfig): MainTask[Unit] = Task.delay{persisted = db}.liftM[MainErrT]
       val resp = service(persist)(req).unsafePerformSync
       "Config was persisted" ==> (persisted must_=== newConn)
     }

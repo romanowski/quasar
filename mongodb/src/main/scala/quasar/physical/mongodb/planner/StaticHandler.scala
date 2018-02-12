@@ -41,8 +41,8 @@ trait StaticHandler[T[_[_]], EX[_]] {
 
 object StaticHandler {
 
-  def v2_6[T[_[_]]: BirecursiveT, EX[_]: Traverse, A]
-    (implicit e26: ExprOpCoreF :<: EX)
+  def handle[T[_[_]]: BirecursiveT, EX[_]: Traverse, A]
+    (implicit ev: ExprOpCoreF :<: EX)
       : StaticHandler[T, EX] =
     new StaticHandler[T, EX] {
       def toBsonFieldName(ej: T[EJson]): Option[BsonField.Name] =
@@ -54,20 +54,9 @@ object StaticHandler {
             val x: Option[List[(BsonField.Name, FreeMapA[T, A])]] =
               m.traverse(t => toBsonFieldName(t._1) map ((_, t._2)))
             x.map(l => $objectLitF(ListMap(l : _*)))
+          case MapFuncCore.StaticArray(a) =>
+            $arrayLitF(a).some
           case _ => none
         }
-    }
-
-  def v3_2[T[_[_]]: BirecursiveT, EX[_]: Traverse, A]
-    (implicit e26: ExprOpCoreF :<: EX, e30: ExprOp3_0F :<: EX, e32: ExprOp3_2F :<: EX)
-      : StaticHandler[T, EX] =
-    new StaticHandler[T, EX] {
-      def handle[A](fm: FreeMapA[T, A]): Option[EX[FreeMapA[T, A]]] = {
-        val h3_2 = fm.project.some collect {
-          case MapFuncCore.StaticArray(a) =>
-            $arrayLitF(a)
-        }
-        h3_2 orElse v2_6[T, EX, A].handle(fm)
-      }
     }
 }

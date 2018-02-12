@@ -111,14 +111,14 @@ object Mounting {
 
     def lookupViewConfig(path: AFile): EitherT[OptionT[FreeS, ?], MountingError, ViewConfig] =
       lookupConfig(path).flatMap(config =>
-        EitherT.right(OptionT(viewConfig.getOption(config).map(ViewConfig.tupled).point[FreeS])))
+        EitherT.rightT(OptionT(viewConfig.getOption(config).map(ViewConfig.tupled).point[FreeS])))
 
     def lookupViewConfigIgnoreError(path: AFile): OptionT[FreeS, ViewConfig] =
       lookupViewConfig(path).toOption.squash
 
     def lookupModuleConfig(path: ADir): EitherT[OptionT[FreeS, ?], MountingError, ModuleConfig] =
       lookupConfig(path).flatMap(config =>
-        EitherT.right(OptionT(moduleConfig.getOption(config).map(ModuleConfig(_)).point[FreeS])))
+        EitherT.rightT(OptionT(moduleConfig.getOption(config).map(ModuleConfig(_)).point[FreeS])))
 
     def lookupModuleConfigIgnoreError(path: ADir): OptionT[FreeS, ModuleConfig] =
       lookupModuleConfig(path).run

@@ -74,8 +74,9 @@ object Repl {
       |  rm [path]
       |  set debug = 0 | 1 | 2
       |  set phaseFormat = tree | code
+      |  set timingFormat = json | tree | onlytotal | nothing
       |  set summaryCount = [rows]
-      |  set format = table | precise | readable | csv
+      |  set format = table | precise | readable | csv | nothing
       |  set [var] = [value]
       |  env""".stripMargin
 
@@ -86,7 +87,8 @@ object Repl {
     phaseFormat:  PhaseFormat,
     summaryCount: Option[Int Refined Positive],
     format:       OutputFormat,
-    variables:    Map[String, String]) {
+    variables:    Map[String, String],
+    timingFormat: TimingFormat) {
 
   def targetDir(path: Option[XDir]): ADir =
     path match {
@@ -110,7 +112,7 @@ object Repl {
 
   type RunStateT[A] = AtomicRef[RunState, A]
 
-  def command[S[_]](cmd: Command)(
+  def command[S[_], T](cmd: Command, executionIdRef: TaskRef[Long])(
     implicit
     Q:  QueryFile.Ops[S],
     M:  ManageFile.Ops[S],
@@ -121,7 +123,8 @@ object Repl {
     S1: RunStateT :<: S,
     S2: ReplFail :<: S,
     S3: Task :<: S,
-    S4: FileSystemFailure :<: S
+    S4: FileSystemFailure :<: S,
+    SE: ScopeExecution[Free[S, ?], T]
   ): Free[S, Unit] = {
     import Command._
 
@@ -151,8 +154,10 @@ object Repl {
           case -\/ (semErr)      => DF.fail(semErr.list.map(_.shows).toList.mkString("; "))
           case  \/-(-\/ (fsErr)) => DF.fail(fsErr.shows)
           case  \/-( \/-(a))     =>
-            P.println(f"Query time: ${elapsed.toMillis/1000.0}%.1fs") *>
-              f(a)
+            (state.timingFormat match {
+              case TimingFormat.OnlyTotal => P.println(f"Query time: ${elapsed.toMillis/1000.0}%.1fs")
+              case _ => ().point[Free[S, ?]]
+            }) *> f(a)
         }
       } yield ()
 
@@ -199,6 +204,10 @@ object Repl {
         RS.modify(_.copy(phaseFormat = fmt)) *>
           P.println(s"Set phase format: $fmt")
 
+      case SetTimingFormat(fmt) =>
+        RS.modify(_.copy(timingFormat = fmt)) *>
+          P.println(s"Set timing format: $fmt")
+
       case SetVar(n, v) =>
         RS.modify(state => state.copy(variables = state.variables + (n -> v))).void
 
@@ -234,23 +243,35 @@ object Repl {
 
       case Select(n, q) =>
         for {
-          state <- RS.get
-          expr  <- DF.unattempt_(sql.fixParser.parse(q.value).leftMap(_.message))
-          block <- DF.unattemptT(resolveImports(expr, state.cwd).leftMap(_.message))
-          vars  = Variables.fromMap(state.variables)
-          _     <- n.cata(name =>
-                   {
-                     val out = state.cwd </> file(name)
-                     val query = fsQ.executeQuery(block, Variables.fromMap(state.variables), state.cwd, out)
-                     runQuery(state, query)(κ(
-                       P.println("Wrote file: " + posixCodec.printPath(out))))
-                   },
-                   {
-                     val query = fsQ.queryResults(block, vars, state.cwd, 0L, state.summaryCount.map(widenPositive[Refined, _0]))
-                       .map(_.toVector)
-                     runQuery(state, query)(ds => summarize[S](state.summaryCount.map(_.value), state.format)(ds))
-                   })
-        } yield ()
+          newExecutionIndex <- Free.liftF(S3(executionIdRef.modify(_ + 1)))
+          result <- SE.newExecution[Unit](newExecutionIndex, { ST =>
+            for {
+              state <- RS.get
+              expr  <- ST.newScope("parse SQL", DF.unattempt_(sql.fixParser.parse(q.value).leftMap(_.message)))
+              block <- ST.newScope("resolve imports", DF.unattemptT(resolveImports(expr, state.cwd).leftMap(_.message)))
+              vars  = Variables.fromMap(state.variables)
+              _     <- n.cata(name =>
+                         {
+                           val out = state.cwd </> file(name)
+                           for {
+                             query <- ST.newScope("plan",
+                               fsQ.executeQuery(block, Variables.fromMap(state.variables), state.cwd, out).pure[Free[S, ?]])
+                             results <- ST.newScope("evaluate",
+                              runQuery(state, query)(κ(P.println("Wrote file: " + posixCodec.printPath(out)))))
+                           } yield results
+                         },
+                         {
+                           for {
+                             query <- ST.newScope("plan",
+                               fsQ.queryResults(block, vars, state.cwd, 0L, state.summaryCount.map(widenPositive[Refined, _0]))
+                                 .map(_.toVector).pure[Free[S, ?]])
+                             results <- ST.newScope("evaluate",
+                              runQuery(state, query)(ds => summarize[S](state.summaryCount.map(_.value), state.format)(ds)))
+                           } yield results
+                         })
+            } yield ()
+        })
+        } yield result
 
       case Explain(q) =>
         for {
@@ -363,6 +384,8 @@ object Repl {
           prefix.map(formatJson(DataCodec.Readable)).unite
         case OutputFormat.Csv =>
           Prettify.renderValues(prefix).map(CsvWriter(none)(_).trim)
+        case OutputFormat.Nothing =>
+          Nil
       }).foldMap(P.println) *>
         (if (max.fold(false)(rows.lengthCompare(_) > 0)) P.println("...")
         else ().point[Free[S, ?]])

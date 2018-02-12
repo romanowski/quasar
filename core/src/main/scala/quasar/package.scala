@@ -94,7 +94,7 @@ package object quasar {
              .lookupModuleConfig(d)
              .bimap(e => SemanticError.genericError(e.shows), _.statements)
              .run.run ∘ (_ \/> (pathErr(pathNotFound(d))))))
-    ).run >>= (i => EitherT(EitherT.right(i.η[Free[S, ?]])))
+    ).run >>= (i => EitherT(EitherT.rightT(i.η[Free[S, ?]])))
 
   /** Returns the `LogicalPlan` for the given SQL^2 query */
   def queryPlan(

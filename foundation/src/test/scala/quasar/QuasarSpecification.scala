@@ -40,6 +40,7 @@ trait QuasarSpecification extends AnyRef
         with org.specs2.execute.PendingUntilFixed
         with org.specs2.ScalaCheck
         with org.specs2.scalaz.ScalazMatchers
+        with ScalazSpecs2Instances
 {
   outer =>
 

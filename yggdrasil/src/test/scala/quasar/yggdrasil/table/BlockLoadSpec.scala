@@ -18,13 +18,14 @@ package quasar.yggdrasil
 package table
 
 import quasar.blueeyes._, json._
+import quasar.precog.TestSupport._, Gen._
 import quasar.precog.common._
+import SampleData._
+import CValueGenerators._
+
 import scalaz._
 import scalaz.syntax.comonad._
 import scalaz.syntax.std.boolean._
-import SampleData._
-import CValueGenerators._
-import quasar.precog.TestSupport._, Gen._
 
 trait BlockLoadSpec extends SpecificationLike with ScalaCheck {
   class BlockStoreLoadTestModule(sampleData: SampleData) extends BlockStoreTestModule[Need] {
@@ -81,7 +82,7 @@ trait BlockLoadSpec extends SpecificationLike with ScalaCheck {
 
     val cschema = module.schema map { case (jpath, ctype) => ColumnRef(CPath(jpath), ctype) }
 
-    val result = module.Table.constString(Set("/test")).load("dummyAPIKey", Schema.mkType(cschema).get).flatMap(t => EitherT.right(t.toJson)).run.copoint
+    val result = module.Table.constString(Set("/test")).load(Schema.mkType(cschema).get).flatMap(t => EitherT.rightT(t.toJson)).run.copoint
     result.map(_.toList) must_== \/.right(expected.toList)
   }
 
@@ -300,10 +301,8 @@ trait BlockLoadSpec extends SpecificationLike with ScalaCheck {
                     (JPath(".fg[1]") -> CLong),
                     (JPath(".fg[2]") -> CNum),
                     (JPath(".fg[2]") -> CLong),
-                    (JPath(".cfnYTg92dg") -> CString))))
-    )
+                    (JPath(".cfnYTg92dg") -> CString)))))
 
     testLoadDense(sampleData)
   }
-
 }

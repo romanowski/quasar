@@ -30,6 +30,7 @@ import org.specs2.execute._
 import org.specs2.matcher._
 import scalaz.{Failure => _, _}, Scalaz._
 import scalaz.stream._
+import quasar.ScalazSpecs2Instances
 
 sealed abstract class Predicate {
   def apply[F[_]: Catchable: Monad](
@@ -40,7 +41,7 @@ sealed abstract class Predicate {
   ): F[Result]
 }
 
-object Predicate {
+object Predicate extends ScalazSpecs2Instances {
   import MustMatchers._
   import StandardResults._
   import DecodeResult.{ok => jok, fail => jfail}

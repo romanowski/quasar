@@ -1,0 +1,6 @@
+{ "a": 1, "b": 10, "login": "mike" }
+{ "a": 1, "b": 20, "login": "john" }
+{ "a": 2, "b": 20, "login": "kate" }
+{ "a": 2, "b": 30, "login": "paul" }
+{ "a": 4, "b": 40, "login": "monica" }
+{ "a": 4, "b": 50, "login": "alex" }

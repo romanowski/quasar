@@ -1,10 +1,6 @@
 {
     "name": "order by if undefined",
-    "backends": {
-        "mongodb_2_6":       "ignoreResultOrder",
-        "mongodb_3_0":       "ignoreResultOrder",
-        "mongodb_read_only": "ignoreResultOrder"
-    },
+    "backends": {},
     "data": "smallZips.data",
     "query": "select city ?? \"foo\" as name from smallZips order by city ?? \"foo\"",
     "predicate": "initial",

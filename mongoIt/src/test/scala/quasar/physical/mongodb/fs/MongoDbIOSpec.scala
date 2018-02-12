@@ -32,7 +32,7 @@ class MongoDbIOSpec extends Qspec {
       "get mongo version" in {
         implicit val ord: scala.math.Ordering[ServerVersion] = Order[ServerVersion].toScalaOrdering
 
-        serverVersion.run(testClient).unsafePerformSync must beGreaterThan(ServerVersion(2, 6, None, ""))
+        serverVersion.run(testClient).unsafePerformSync must beGreaterThanOrEqualTo(ServerVersion(3, 2, None, ""))
       }
 
       "get stats" in {

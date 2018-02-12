@@ -25,15 +25,16 @@ import quasar.ejson.{EJson, Fixed}
 import quasar.fp._
 import quasar.qscript.{
   construction,
-  Hole, 
-  HoleF, 
-  IncludeId, 
-  JoinSide, 
-  ReduceFunc, 
-  ReduceFuncs, 
-  ReduceIndex, 
-  ReduceIndexF, 
-  SrcHole, 
+  Hole,
+  HoleF,
+  IncludeId,
+  JoinSide,
+  ReduceFunc,
+  ReduceFuncs,
+  ReduceIndex,
+  ReduceIndexF,
+  ShiftType,
+  SrcHole,
   Take
 }
 import quasar.qscript.MapFuncsCore.IntLit
@@ -123,7 +124,7 @@ object GraduateSpec extends Qspec with QSUTTypes[Fix] {
             func.MakeArray(func.RightSide)))
 
         val qgraph: Fix[QSU] = qsu.leftShift(qsu.read(afile), struct, IncludeId, arepair, Rotation.ShiftArray)
-        val qscript: Fix[QSE] = qse.LeftShift(qse.Read[AFile](afile), struct, IncludeId, repair)
+        val qscript: Fix[QSE] = qse.LeftShift(qse.Read[AFile](afile), struct, IncludeId, ShiftType.Array, repair)
 
         qgraph must graduateAs(qscript)
       }
@@ -201,6 +202,7 @@ object GraduateSpec extends Qspec with QSUTTypes[Fix] {
           fqse.Read(root </> file("zips")),
           HoleF[Fix],
           IncludeId,
+          ShiftType.Array,
           concatArr)
 
       val rhs: Free[QSE, Hole] =

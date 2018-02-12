@@ -301,5 +301,5 @@ object CPath {
     }
   }
 
-  implicit val CPathOrdering = CPathOrder.toScalaOrdering
+  implicit val CPathOrdering: Ordering[CPath] = CPathOrder.toScalaOrdering
 }

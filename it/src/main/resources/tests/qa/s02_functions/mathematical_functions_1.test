@@ -1,0 +1,21 @@
+{
+  "name": "[qa_s02] mathematical functions 1",
+
+  "backends": {
+    "mongodb_read_only": "skip"
+  },
+
+  "data": "math.data",
+
+  "query": "select a % nums.b, nums.b ^ nums.c as p from math",
+
+  "predicate": "exactly",
+  "ignoreResultOrder": true,
+
+  "ignoreFieldOrder": true,
+
+  "expected": [
+    {"0": 0, "p": 2},
+    {"0": 1, "p": 343}
+  ]
+}

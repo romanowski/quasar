@@ -16,13 +16,19 @@
 
 package quasar.precog
 
-final case class JPath(nodes: List[JPathNode]) extends ToString {
-  def to_s: String = nodes match {
+final case class JPath(nodes: List[JPathNode]) {
+  override def toString: String = nodes match {
     case Nil => "."
     case _   => nodes mkString ""
   }
 }
 
-sealed abstract class JPathNode(val to_s: String) extends ToString
-final case class JPathField(name: String) extends JPathNode("." + name)
-final case class JPathIndex(index: Int) extends JPathNode(s"[$index]")
+sealed abstract class JPathNode
+
+final case class JPathField(name: String) extends JPathNode {
+  override def toString: String = "." + name
+}
+
+final case class JPathIndex(index: Int) extends JPathNode {
+  override def toString: String = s"[$index]"
+}

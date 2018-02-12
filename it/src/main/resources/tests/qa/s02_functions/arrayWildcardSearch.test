@@ -1,0 +1,16 @@
+{
+  "name": "[qa_s02] array wildcard search",
+
+  "backends": {},
+  "data": "../arrayProcessing.data",
+
+  "query": "select * from `../arrayProcessing` where \"1\" in a[_]",
+
+  "predicate": "exactly",
+
+  "ignoredFields": ["_id"],
+
+  "expected": [
+    {"a": ["1", "2", "3"]}
+  ]
+}

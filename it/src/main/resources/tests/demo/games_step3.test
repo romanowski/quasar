@@ -1,0 +1,16 @@
+{
+    "name": "games_step3",
+    "data": "steamgames.data",
+    "backends": {
+       "couchbase":         "ignoreFieldOrder",
+       "marklogic_json":    "ignoreFieldOrder",
+       "mimir":             "ignoreFieldOrder"
+    },
+    "query": "temp0 := SELECT A_Name AS Game, B_Released AS ReleaseDate, C_Recommendations AS Reviews, D_Metacritic AS Score, PriceInitial AS Price FROM steamgames WHERE (IsAction = \"TRUE\") AND (A_Name <> \"\") AND (D_Metacritic >= 0) AND (C_Recommendations >= 0) ORDER BY D_Metacritic DESC, PriceInitial DESC, A_Name ASC;
+    select count(*) as count from (temp0) as temp1
+    ",
+    "predicate": "exactly",
+    "expected": [
+       { "count": 5307 }
+    ]
+}

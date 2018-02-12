@@ -57,7 +57,7 @@ class PostgresRenderQueryTest extends Qspec with SqlExprSupport with QScriptHelp
       val repr = sr.plan(Const(ShiftedRead(afile, ExcludeId)))
 
       PostgresRenderQuery.asString(repr) must
-        beRightDisjunction("select row_to_json(row) from ((select * from db.foo)) as row")
+        beRightDisjunction("select row_to_json(row) from ((select * from db.foo _0)) as row")
     }
 
     "render shifted read with IncludeId" in {
@@ -67,7 +67,7 @@ class PostgresRenderQueryTest extends Qspec with SqlExprSupport with QScriptHelp
 
       PostgresRenderQuery.asString(repr) must
         beRightDisjunction(
-          "select row_to_json(row) from ((select (row_number() over(), *) from db.foo)) as row")
+          "select row_to_json(row) from ((select (row_number() over(), *) from db.foo _0)) as row")
     }
 
     "render shifted read ids only" in {
@@ -76,7 +76,7 @@ class PostgresRenderQueryTest extends Qspec with SqlExprSupport with QScriptHelp
       val repr = sr.plan(Const(ShiftedRead(afile, IdOnly)))
 
       PostgresRenderQuery.asString(repr) must
-        beRightDisjunction("select row_to_json(row) from ((select row_number() over() from db.foo)) as row")
+        beRightDisjunction("select row_to_json(row) from ((select row_number() over() from db.foo _0)) as row")
     }
   }
 }

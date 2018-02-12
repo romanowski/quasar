@@ -1,0 +1,15 @@
+{
+  "name": "[qa_s02] array index reference",
+
+  "backends": {},
+  "data": "../arrayProcessing.data",
+
+  "query": "select a[1] as a from `../arrayProcessing`",
+
+  "predicate": "exactly",
+
+  "expected": [
+    {"a": "b"},
+    {"a": "2"}
+  ]
+}

@@ -64,6 +64,7 @@ final class ExpandShifts[T[_[_]]: BirecursiveT: EqualT: ShowT] extends QSUTTypes
       rotation2 === Rotation.FlattenMap || rotation2 === Rotation.ShiftMap
   }
 
+  @SuppressWarnings(Array("org.wartremover.warts.TraversableOps"))
   def expandShifts[
     G[_]: Monad: NameGenerator: MonadState_[?[_], RevIdx]: PlannerErrorME: MonadState_[?[_], QAuth]
     ]
@@ -88,7 +89,13 @@ final class ExpandShifts[T[_[_]]: BirecursiveT: EqualT: ShowT] extends QSUTTypes
             _ <- ApplyProvenance.computeProvenance[T, G](firstShift)
             shiftAndRotation <- ss.zipWithIndex.foldLeftM[G, (QSUGraph, Rotation)]((firstShift :++ mls, rotation)) {
               case ((shiftAbove, rotationAbove), ((newStruct, newIdStatus, newRotation), idx)) =>
-                val repair = func.ConcatMaps(func.AccessLeftTarget(Access.valueHole(_)), func.MakeMapS((idx + 1).toString, func.RightTarget))
+                val keysAbove = ("original" :: (0 to idx).map(_.toString).toList)
+                val mapsAbove = keysAbove.map(s => func.MakeMapS(s, func.ProjectKeyS(func.AccessLeftTarget(Access.valueHole(_)), s)))
+
+                // we know statically that mapsAbove is non-empty
+                val staticAbove = mapsAbove.reduceLeft(func.ConcatMaps(_, _))
+
+                val repair = func.ConcatMaps(staticAbove, func.MakeMapS((idx + 1).toString, func.RightTarget))
                 val struct = newStruct >> func.ProjectKeyS(func.Hole, originalKey)
                 val newShiftPat =
                   QSU.LeftShift[T, Symbol](shiftAbove.root, struct, newIdStatus, repair, newRotation)

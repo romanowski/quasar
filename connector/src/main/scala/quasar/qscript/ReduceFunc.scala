@@ -114,7 +114,7 @@ object ReduceFunc {
       }
   }
 
-  def translateUnaryReduction[A]: UnaryFunc => A => ReduceFunc[A] = {
+  def translateUnaryReduction[A]: PartialFunction[UnaryFunc, A => ReduceFunc[A]] = {
     case agg.Count               => Count(_)
     case agg.Sum                 => Sum(_)
     case agg.Min                 => Min(_)
@@ -126,7 +126,7 @@ object ReduceFunc {
     case structural.UnshiftArray => UnshiftArray(_)
   }
 
-  def translateBinaryReduction[A]: BinaryFunc => (A, A) => ReduceFunc[A] = {
+  def translateBinaryReduction[A]: PartialFunction[BinaryFunc, (A, A) => ReduceFunc[A]] = {
     case structural.UnshiftMap => UnshiftMap(_, _)
   }
 

@@ -25,7 +25,6 @@ trait ArrayLibSpecs[M[+_]] extends EvaluatorSpecification[M]
 
   import dag._
   import instructions._
-
   import library._
 
   def testEval(graph: DepGraph): Set[SEvent] = {
@@ -37,10 +36,8 @@ trait ArrayLibSpecs[M[+_]] extends EvaluatorSpecification[M]
 
   "array utilities" should {
     "flatten a homogeneous set" in {
-      val line = Line(1, 1, "")
-
       val input = dag.Morph1(Flatten,
-        dag.AbsoluteLoad(Const(CString("/hom/arrays"))(line))(line))(line)
+        dag.AbsoluteLoad(Const(CString("/hom/arrays"))))
 
       val result = testEval(input)
       result must haveSize(25)
@@ -54,10 +51,8 @@ trait ArrayLibSpecs[M[+_]] extends EvaluatorSpecification[M]
     }
 
     "flatten a heterogeneous set" in {
-      val line = Line(1, 1, "")
-
       val input = dag.Morph1(Flatten,
-        dag.AbsoluteLoad(Const(CString("/het/arrays"))(line))(line))(line)
+        dag.AbsoluteLoad(Const(CString("/het/arrays"))))
 
       val result = testEval(input)
       result must haveSize(26)
@@ -75,16 +70,14 @@ trait ArrayLibSpecs[M[+_]] extends EvaluatorSpecification[M]
     }
 
     "flattened set is related to original set" in {
-      val line = Line(1, 1, "")
-
       val input = dag.Join(JoinObject, IdentitySort,
         dag.Join(WrapObject, Cross(None),
-          Const(CString("arr"))(line),
-          dag.AbsoluteLoad(Const(CString("/het/arrays"))(line))(line))(line),
+          Const(CString("arr")),
+          dag.AbsoluteLoad(Const(CString("/het/arrays")))),
         dag.Join(WrapObject, Cross(None),
-          Const(CString("val"))(line),
+          Const(CString("val")),
           dag.Morph1(Flatten,
-            dag.AbsoluteLoad(Const(CString("/het/arrays"))(line))(line))(line))(line))(line)
+            dag.AbsoluteLoad(Const(CString("/het/arrays"))))))
 
       val result = testEval(input)
       result must haveSize(26)
@@ -102,19 +95,14 @@ trait ArrayLibSpecs[M[+_]] extends EvaluatorSpecification[M]
     }
 
     "flatten a non-array without exploding" in {
-      val line = Line(1, 1, "")
-
       val input = dag.Morph1(Flatten,
-        Const(CString("/het/arrays"))(line))(line)
+        Const(CString("/het/arrays")))
 
       testEval(input) must haveSize(0)
     }
 
     "flatten an empty set without exploding" in {
-      val line = Line(1, 1, "")
-
-      val input = dag.Morph1(Flatten,
-        Undefined(line))(line)
+      val input = dag.Morph1(Flatten, Undefined.apply)
 
       testEval(input) must haveSize(0)
     }

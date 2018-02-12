@@ -29,14 +29,8 @@ import scalacheck.ScalazArbitrary._
 
 object ArbitraryExprOp {
 
-  val fpCore: ExprOpCoreF.fixpoint[Fix[Expr2_6], Expr2_6] =
-    new ExprOpCoreF.fixpoint[Fix[Expr2_6], Expr2_6](_.embed)
-  import fpCore._
-  val fp3_0: ExprOp3_0F.fixpoint[Fix[Expr3_0], Expr3_0] =
-    new ExprOp3_0F.fixpoint[Fix[Expr3_0], Expr3_0](_.embed)
-  import fp3_0._
-  val fp3_2: ExprOp3_2F.fixpoint[Fix[Expr3_2], Expr3_2] =
-    new ExprOp3_2F.fixpoint[Fix[Expr3_2], Expr3_2](_.embed)
+  val fp3_2: ExprOpCoreF.fixpoint[Fix[Expr3_2], Expr3_2] =
+    new ExprOpCoreF.fixpoint[Fix[Expr3_2], Expr3_2](_.embed)
   import fp3_2._
 
   implicit val formatSpecifierArbitrary: Arbitrary[FormatSpecifier] = Arbitrary {
@@ -51,25 +45,16 @@ object ArbitraryExprOp {
     arbitrary[List[String \/ FormatSpecifier]].map(FormatString(_))
   }
 
-  lazy val genExpr: Gen[Fix[Expr2_6]] =
+  lazy val genSimpleExpr: Gen[Fix[Expr3_2]] =
     Gen.oneOf(
       arbitrary[Int].map(x => $literal(Bson.Int32(x))),
-      Gen.alphaChar.map(c => $var(DocField(BsonField.Name(c.toString)))))
-
-  lazy val genExpr3_0: Gen[Fix[Expr3_0]] = {
-    def inj(expr: Fix[Expr2_6]) = expr.transCata[Fix[Expr3_0]](Inject[Expr2_6, Expr3_0])
-    Gen.oneOf(
-      genExpr.map(inj),
+      Gen.alphaChar.map(c => $var(DocField(BsonField.Name(c.toString)))),
       arbitrary[FormatString].map(fmt =>
-        $dateToString(fmt, inj($var(DocField(BsonField.Name("date")))))))
-  }
+        $dateToString(fmt, $var(DocField(BsonField.Name("date"))))))
 
-  lazy val genExpr3_2: Gen[Fix[Expr3_2]] = {
-    def inj(expr: Fix[Expr2_6])  = expr.transCata[Fix[Expr3_2]](Inject[Expr2_6, Expr3_2])
-    def inj3_0(expr: Fix[Expr3_0]) = expr.transCata[Fix[Expr3_2]](Inject[Expr3_0, Expr3_2])
+  lazy val genExpr: Gen[Fix[Expr3_2]] = {
     Gen.oneOf(
-      genExpr3_0.map(inj3_0),
-      genExpr.map(inj).flatMap(x => Gen.oneOf(
+      genSimpleExpr.flatMap(x => Gen.oneOf(
         $sqrt(x),
         $abs(x),
         $log10(x),
@@ -78,8 +63,8 @@ object ArbitraryExprOp {
         $ceil(x),
         $floor(x))),
       for {
-        x <- genExpr.map(inj)
-        y <- genExpr.map(inj)
+        x <- genSimpleExpr
+        y <- genSimpleExpr
         expr <- Gen.oneOf(
           $log(x, y),
           $pow(x, y))
@@ -88,15 +73,18 @@ object ArbitraryExprOp {
 
   lazy val genExpr3_4: Gen[Fix[Expr3_4]] = {
     def inj3_2(expr: Fix[Expr3_2]) = expr.transCata[Fix[Expr3_4]](Inject[Expr3_2, Expr3_4])
-    genExpr3_2.map(inj3_2)
+    genExpr.map(inj3_2)
+  }
+
+  lazy val genExpr3_4_4: Gen[Fix[Expr3_4_4]] = {
+    def inj3_4(expr: Fix[Expr3_4]) = expr.transCata[Fix[Expr3_4_4]](Inject[Expr3_4, Expr3_4_4])
+    genExpr3_4.map(inj3_4)
   }
 
 }
 
 class ExpressionSpec extends quasar.Qspec {
   import fixExprOp._
-  val fp3_0 = new ExprOp3_0F.fixpoint[Fix[ExprOp], ExprOp](_.embed)
-  import fp3_0._
 
   val ops = ExprOpOps[ExprOp]
 

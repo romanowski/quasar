@@ -66,9 +66,11 @@ private[mongodb] final class JavaScriptWorkflowExecutor
   }
 
   protected def distinct(src: Collection, cfg: Distinct, field: BsonField.Name) = {
+    val filter =
+      cfg.query.map(_.bson.toJs).toList
+
     val distinct0 =
-      foldExpr(cfg.query)((q, js) => Call(Select(js, "filter"), List(q.bson.toJs)))
-        .exec(Call(Select(toJsRef(src), "distinct"), List(Str(cfg.field.asText))))
+      Call(Select(toJsRef(src), "distinct"), List(Str(cfg.field.asText)) ::: filter)
 
     tell(Call(
       Select(distinct0, "map"),

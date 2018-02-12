@@ -26,7 +26,7 @@ import matryoshka.implicits._
 import scalaz._, Scalaz._
 
 /** "Pipeline" operators available in all supported version of MongoDB
-  * (since 2.6).
+  * (since 3.2).
   */
 trait ExprOpCoreF[A]
 object ExprOpCoreF {
@@ -93,6 +93,29 @@ object ExprOpCoreF {
   final case class $ifNullF[A](expr: A, replacement: A) extends ExprOpCoreF[A]
   final case class $objectLitF[A](map: ListMap[BsonField.Name, A]) extends ExprOpCoreF[A]
 
+  //added in 3.0
+  final case class $dateToStringF[A](format: FormatString, date: A) extends ExprOpCoreF[A]
+
+  // added in 3.2
+  final case class $sqrtF[A](value: A)                extends ExprOpCoreF[A]
+  final case class $absF[A](value: A)                 extends ExprOpCoreF[A]
+  final case class $logF[A](value: A, base: A)        extends ExprOpCoreF[A]
+  final case class $log10F[A](value: A)               extends ExprOpCoreF[A]
+  final case class $lnF[A](value: A)                  extends ExprOpCoreF[A]
+  final case class $powF[A](value: A, exp: A)         extends ExprOpCoreF[A]
+  final case class $expF[A](value: A)                 extends ExprOpCoreF[A]
+  final case class $truncF[A](value: A)               extends ExprOpCoreF[A]
+  final case class $ceilF[A](value: A)                extends ExprOpCoreF[A]
+  final case class $floorF[A](value: A)               extends ExprOpCoreF[A]
+  final case class $arrayElemAtF[A](array: A, idx: A) extends ExprOpCoreF[A]
+  // This refers to square brackets [] in MongoDB.
+  // From the mongo docs:
+  // Changed in version 3.2: Starting in MongoDB 3.2, $project stage supports
+  // using the square brackets [] to directly create new array fields.
+  final case class $arrayLitF[A](values: List[A])     extends ExprOpCoreF[A]
+  final case class $concatArraysF[A](arrays: List[A]) extends ExprOpCoreF[A]
+  final case class $isArrayF[A](array: A)             extends ExprOpCoreF[A]
+
   implicit val equal: Delay[Equal, ExprOpCoreF] =
     new Delay[Equal, ExprOpCoreF] {
       def apply[A](eq: Equal[A]) = {
@@ -146,7 +169,22 @@ object ExprOpCoreF {
           case ($toUpperF(v1), $toUpperF(v2))       => v1 ≟ v2
           case ($weekF(v1), $weekF(v2))             => v1 ≟ v2
           case ($yearF(v1), $yearF(v2))             => v1 ≟ v2
-          case _                                    => true
+          case ($dateToStringF(fmt1, x1), $dateToStringF(fmt2, x2)) =>
+            fmt1 ≟ fmt2 && x1 ≟ x2
+          case ($sqrtF(v1), $sqrtF(v2))                       => v1 ≟ v2
+          case ($absF(v1), $absF(v2))                         => v1 ≟ v2
+          case ($logF(v1, b1), $logF(v2, b2))                 => (v1 ≟ v2) && (b1 ≟ b2)
+          case ($log10F(v1), $log10F(v2))                     => v1 ≟ v2
+          case ($lnF(v1), $lnF(v2))                           => v1 ≟ v2
+          case ($powF(v1, e1), $powF(v2, e2))                 => (v1 ≟ v2) && (e1 ≟ e2)
+          case ($truncF(v1), $truncF(v2))                     => v1 ≟ v2
+          case ($ceilF(v1), $ceilF(v2))                       => v1 ≟ v2
+          case ($floorF(v1), $floorF(v2))                     => v1 ≟ v2
+          case ($arrayElemAtF(a1, i1), $arrayElemAtF(a2, i2)) => a1 ≟ a2 && i1 ≟ i2
+          case ($arrayLitF(a1), $arrayLitF(a2))               => a1 ≟ a2
+          case ($concatArraysF(a1), $concatArraysF(a2))       => a1 ≟ a2
+          case ($isArrayF(a1), $isArrayF(a2))                 => a1 ≟ a2
+          case _                                              => false
         }
       }
     }
@@ -204,6 +242,21 @@ object ExprOpCoreF {
         case $toUpperF(a)         => G.map(f(a))($toUpperF(_))
         case $weekF(a)            => G.map(f(a))($weekF(_))
         case $yearF(a)            => G.map(f(a))($yearF(_))
+        case $dateToStringF(fmt, v) => G.map(f(v))($dateToStringF(fmt, _))
+        case $sqrtF(v)           => G.map(f(v))($sqrtF(_))
+        case $absF(v)            => G.map(f(v))($absF(_))
+        case $logF(v, base)      => (f(v) |@| f(base))($logF(_, _))
+        case $log10F(v)          => G.map(f(v))($log10F(_))
+        case $lnF(v)             => G.map(f(v))($lnF(_))
+        case $powF(v, exp)       => (f(v) |@| f(exp))($powF(_, _))
+        case $expF(v)            => G.map(f(v))($expF(_))
+        case $truncF(v)          => G.map(f(v))($truncF(_))
+        case $ceilF(v)           => G.map(f(v))($ceilF(_))
+        case $floorF(v)          => G.map(f(v))($floorF(_))
+        case $arrayElemAtF(a, i) => (f(a) |@| f(i))($arrayElemAtF(_, _))
+        case $arrayLitF(a)       => G.map(a.traverse(f))($arrayLitF(_))
+        case $concatArraysF(a)   => G.map(a.traverse(f))($concatArraysF(_))
+        case $isArrayF(a)        => G.map(f(a))($isArrayF(_))
       }
   }
 
@@ -286,7 +339,24 @@ object ExprOpCoreF {
         Bson.Doc("$cond" -> Bson.Arr(predicate, ifTrue, ifFalse))
       case $ifNullF(expr, replacement)   => Bson.Doc("$ifNull" -> Bson.Arr(expr, replacement))
       case $objectLitF(m)                => Bson.Doc(m.map(t => t._1.value -> t._2))
-    }
+      case $dateToStringF(format, date)  =>
+        Bson.Doc("$dateToString" -> Bson.Doc(
+          "format" -> Bson.Text(format.components.foldMap(_.fold(_.replace("%", "%%"), _.str))),
+          "date" -> date))
+      case $sqrtF(value)             => Bson.Doc("$sqrt" -> value)
+      case $absF(value)              => Bson.Doc("$abs" -> value)
+      case $logF(value, base)        => Bson.Doc("$log" -> Bson.Arr(value, base))
+      case $log10F(value)            => Bson.Doc("$log10" -> value)
+      case $lnF(value)               => Bson.Doc("$ln" -> value)
+      case $powF(value, exp)         => Bson.Doc("$pow" -> Bson.Arr(value, exp))
+      case $truncF(value)            => Bson.Doc("$trunc" -> value)
+      case $ceilF(value)             => Bson.Doc("$ceil" -> value)
+      case $floorF(value)            => Bson.Doc("$floor" -> value)
+      case $arrayElemAtF(array, idx) => Bson.Doc("$arrayElemAt" -> Bson.Arr(array, idx))
+      case $arrayLitF(value)         => Bson.Arr(value: _*)
+      case $concatArraysF(value)     => Bson.Doc("$concatArrays" -> Bson.Arr(value: _*))
+      case $isArrayF(value)          => Bson.Doc("$isArray" -> value)
+  }
 
     def rebase[T](base: T)(implicit T: Recursive.Aux[T, OUT]) = {
       case $varF(DocVar.ROOT(None)) => base.project.some
@@ -383,6 +453,23 @@ object ExprOpCoreF {
                                          = convert($ifNullF(expr, replacement))
     def $objectLit(map: ListMap[BsonField.Name, T]): T
                                          = convert($objectLitF(map))
+    def $dateToString(format: FormatString, date: T): T
+                                         = convert($dateToStringF(format, date))
+    def $sqrt(value: T): T               = convert($sqrtF(value))
+    def $abs(value: T): T                = convert($absF(value))
+    def $log(value: T, base: T): T       = convert($logF(value, base))
+    def $log10(value: T): T              = convert($log10F(value))
+    def $ln(value: T): T                 = convert($lnF(value))
+    def $pow(value: T, exp: T): T        = convert($powF(value, exp))
+    def $exp(value: T): T                = convert($expF(value))
+    def $trunc(value: T): T              = convert($truncF(value))
+    def $ceil(value: T): T               = convert($ceilF(value))
+    def $floor(value: T): T              = convert($floorF(value))
+    def $arrayElemAt(array: T, idx: T): T
+                                         = convert($arrayElemAtF(array, idx))
+    def $arrayLit(value: List[T]): T     = convert($arrayLitF(value))
+    def $concatArrays(value: List[T]): T = convert($concatArraysF(value))
+    def $isArray(value: T): T            = convert($isArrayF(value))
 
     val $$ROOT: T    = $var(DocVar.ROOT())
     val $$CURRENT: T = $var(DocVar.CURRENT())
@@ -719,4 +806,84 @@ object objectLit {
 object $objectLitF {
   def apply[EX[_], A](value: ListMap[BsonField.Name, A])(implicit I: ExprOpCoreF :<: EX): EX[A] =
     I.inj(ExprOpCoreF.$objectLitF(value))
+}
+
+object $dateToStringF {
+  def apply[EX[_], A](format: FormatString, date: A)(implicit I: ExprOpCoreF :<: EX): EX[A] =
+    I.inj(ExprOpCoreF.$dateToStringF(format, date))
+}
+
+object $sqrtF {
+  def apply[EX[_], A](value: A)(implicit I: ExprOpCoreF :<: EX): EX[A] =
+    I.inj(ExprOpCoreF.$sqrtF(value))
+}
+
+object $absF {
+  def apply[EX[_], A](value: A)(implicit I: ExprOpCoreF :<: EX): EX[A] =
+    I.inj(ExprOpCoreF.$absF(value))
+}
+
+object $logF {
+  def apply[EX[_], A](value: A, base: A)(implicit I: ExprOpCoreF :<: EX): EX[A] =
+    I.inj(ExprOpCoreF.$logF(value, base))
+}
+
+object $log10F {
+  def apply[EX[_], A](value: A)(implicit I: ExprOpCoreF :<: EX): EX[A] =
+    I.inj(ExprOpCoreF.$log10F(value))
+}
+
+object $lnF {
+  def apply[EX[_], A](value: A)(implicit I: ExprOpCoreF :<: EX): EX[A] =
+    I.inj(ExprOpCoreF.$lnF(value))
+}
+
+object $powF {
+  def apply[EX[_], A](value: A, exp: A)(implicit I: ExprOpCoreF :<: EX): EX[A] =
+    I.inj(ExprOpCoreF.$powF(value, exp))
+}
+
+object $expF {
+  def apply[EX[_], A](value: A)(implicit I: ExprOpCoreF :<: EX): EX[A] =
+    I.inj(ExprOpCoreF.$expF(value))
+}
+
+object $truncF {
+  def apply[EX[_], A](value: A)(implicit I: ExprOpCoreF :<: EX): EX[A] =
+    I.inj(ExprOpCoreF.$truncF(value))
+}
+
+object $ceilF {
+  def apply[EX[_], A](value: A)(implicit I: ExprOpCoreF :<: EX): EX[A] =
+    I.inj(ExprOpCoreF.$ceilF(value))
+}
+
+object $floorF {
+  def apply[EX[_], A](value: A)(implicit I: ExprOpCoreF :<: EX): EX[A] =
+    I.inj(ExprOpCoreF.$floorF(value))
+}
+
+object $arrayLitF {
+  def apply[EX[_], A](value: List[A])(implicit I: ExprOpCoreF :<: EX): EX[A] =
+    I.inj(ExprOpCoreF.$arrayLitF(value))
+
+  def unapply[EX[_], A](expr: EX[A])(implicit I: ExprOpCoreF :<: EX): Option[List[A]] =
+    I.prj(expr) collect {
+      case ExprOpCoreF.$arrayLitF(value) => value
+    }
+}
+
+object $arrayElemAtF {
+  def apply[EX[_], A](array: A, idx: A)(implicit I: ExprOpCoreF :<: EX): EX[A] =
+    I.inj(ExprOpCoreF.$arrayElemAtF(array, idx))
+
+  def unapply[EX[_], A](expr: EX[A])(implicit I: ExprOpCoreF :<: EX): Option[(A, A)] =
+    I.prj(expr) collect {
+      case ExprOpCoreF.$arrayElemAtF(array, idx) => (array, idx)
+    }
+}
+
+object $arrayElemAt {
+  def unapply[T, EX[_]](expr: T)(implicit T: Recursive.Aux[T, EX], EX: Functor[EX], I: ExprOpCoreF :<: EX): Option[(T, T)] =
+    $arrayElemAtF.unapply(T.project(expr))
 }

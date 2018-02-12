@@ -22,10 +22,9 @@ import scalaz._, Scalaz._
 
 final case class ServerVersion(major: Int, minor: Int, revision: Option[Int], extra: String)
 object ServerVersion {
-  val MongoDb2_6 = ServerVersion(2, 6, None, "")
-  val MongoDb3_0 = ServerVersion(3, 0, None, "")
   val MongoDb3_2 = ServerVersion(3, 2, None, "")
   val MongoDb3_4 = ServerVersion(3, 4, None, "")
+  val MongoDb3_4_4 = ServerVersion(3, 4, Some(4), "")
 
   private val Pattern = """(?s)(\d+)\.(\d+)(?:\.(\d+))?[-. _]?(.*)""".r
 

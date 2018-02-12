@@ -77,10 +77,6 @@ object PlannerHelpers {
 
   import fixExprOp._
 
-  val expr3_0Fp: ExprOp3_0F.fixpoint[Fix[ExprOp], ExprOp] =
-    new ExprOp3_0F.fixpoint[Fix[ExprOp], ExprOp](_.embed)
-  val expr3_2Fp: ExprOp3_2F.fixpoint[Fix[ExprOp], ExprOp] =
-    new ExprOp3_2F.fixpoint[Fix[ExprOp], ExprOp](_.embed)
   val expr3_4Fp: ExprOp3_4F.fixpoint[Fix[ExprOp], ExprOp] =
     new ExprOp3_4F.fixpoint[Fix[ExprOp], ExprOp](_.embed)
 
@@ -144,6 +140,11 @@ object PlannerHelpers {
              details)
     }
   }
+
+  // Some useful debugging objects
+  val rt  = RenderTree[Crystallized[WorkflowF]]
+  val rtq = RenderTree[Fix[fs.MongoQScript[Fix, ?]]]
+  val toMetalPlan: Crystallized[WorkflowF] => Option[String] = WorkflowExecutor.toJS(_).toOption
 
   val basePathDb = rootDir[Sandboxed] </> dir("db")
 
@@ -243,12 +244,6 @@ object PlannerHelpers {
   ): Either[FileSystemError, Crystallized[WorkflowF]] =
     queryPlanner(query, basePath, model, stats, indexes, listContents, anyDoc, Instant.now).run.value.toEither
 
-  def plan2_6(query: Fix[Sql]): Either[FileSystemError, Crystallized[WorkflowF]] =
-    plan0(query, basePathDb, MongoQueryModel.`2.6`, κ(None), κ(None), emptyDoc)
-
-  def plan3_0(query: Fix[Sql]): Either[FileSystemError, Crystallized[WorkflowF]] =
-    plan0(query, basePathDb, MongoQueryModel.`3.0`, κ(None), κ(None), emptyDoc)
-
   def plan3_2(query: Fix[Sql]): Either[FileSystemError, Crystallized[WorkflowF]] =
     plan0(query, basePathDb, MongoQueryModel.`3.2`, defaultStats, defaultIndexes, emptyDoc)
 
@@ -263,13 +258,16 @@ object PlannerHelpers {
   def plan(query: Fix[Sql]): Either[FileSystemError, Crystallized[WorkflowF]] =
     plan3_4(query, defaultStats, defaultIndexes, emptyDoc)
 
+  def planMetal(query: Fix[Sql]): Option[String] =
+    plan(query).disjunction.toOption >>= toMetalPlan
+
   def planAt(time: Instant, query: Fix[Sql]): Either[FileSystemError, Crystallized[WorkflowF]] =
     queryPlanner(query, basePathDb, MongoQueryModel.`3.4`, defaultStats, defaultIndexes, listContents, emptyDoc, time).run.value.toEither
 
   def planLog(query: Fix[Sql]): Vector[PhaseResult] =
     queryPlanner(query, basePathDb, MongoQueryModel.`3.2`, defaultStats, defaultIndexes, listContents, emptyDoc, Instant.now).run.written
 
-  def qplan0(
+  def qscriptPlan(
     qs: Fix[fs.MongoQScript[Fix, ?]],
     model: MongoQueryModel,
     stats: Collection => Option[CollectionStatistics],
@@ -278,8 +276,15 @@ object PlannerHelpers {
   ): Either[FileSystemError, Crystallized[WorkflowF]] =
     MongoDb.doPlan(qs, fs.QueryContext(stats, indexes), model, anyDoc, Instant.now).run.value.toEither
 
+  def qplan0(
+    qs: Fix[fs.MongoQScript[Fix, ?]],
+    stats: Collection => Option[CollectionStatistics],
+    indexes: Collection => Option[Set[Index]]
+  ): Either[FileSystemError, Crystallized[WorkflowF]] =
+    qscriptPlan(qs, MongoQueryModel.`3.4`, stats, indexes, emptyDoc)
+
   def qplan(qs: Fix[fs.MongoQScript[Fix, ?]]): Either[FileSystemError, Crystallized[WorkflowF]] =
-    qplan0(qs, MongoQueryModel.`3.4`, defaultStats, defaultIndexes, emptyDoc)
+    qscriptPlan(qs, MongoQueryModel.`3.4`, defaultStats, defaultIndexes, emptyDoc)
 
   def qtestFile(testName: String): JFile = jFile(toRFile("q " + testName))
 
@@ -352,6 +357,7 @@ object PlannerHelpers {
 
 trait PlannerHelpers extends
     org.specs2.mutable.Specification with
+    ScalazSpecs2Instances with
     org.specs2.ScalaCheck with
     CompilerHelpers with
     TreeMatchers with

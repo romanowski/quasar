@@ -1,0 +1,21 @@
+{
+  "name": "distinct of a nullable field",
+
+  "backends": {
+  },
+
+  "data": "nullable_distinct.data",
+
+  "query": "select distinct foo from nullable_distinct",
+
+  "predicate": "exactly",
+  "ignoreResultOrder": true,
+
+  "expected": [
+    "a"
+  , null
+  , "b"
+  , "c"
+  , "d"
+  ]
+}
